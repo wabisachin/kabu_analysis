@@ -86,8 +86,6 @@ total_P(利益の合計額), total_L(損失の合計額), max_P（最大利益pt
 
 #----------------------------------------------以下、プログラム開始↓↓↓-------------------------------------------------------
 
-
-
 # import module
 # import module_calculation as cl
 
@@ -252,7 +250,7 @@ total_P(利益の合計額), total_L(損失の合計額), max_P（最大利益pt
 # consevtive_days = 3 #終値上昇or下落の連続日数
 # holding_days = 5 #保有日数
 
-#手法検証の関数(※完成するまではいいけど、最後まとめるときは関数として定義しておく！！)
+#手法検証の関数
 
 def trend_change_days_in_a_low(data_set, code, holding_days=0, consevtive_days=0):#consetive_daysは引け値連続上昇（下落）日数のボーダー日数
     

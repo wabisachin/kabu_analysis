@@ -2,6 +2,25 @@
 # coding:utf-8
 
 import csv
+import pandas as pd
+import statistics as st
+
+#時系列データ(.csv)から[日付、始値、高値、安値、終値]を抽出し、Dataflame型に変換する関数
+def get_data(fileName):
+
+    df= pd.read_csv(fileName)
+    df.drop(df.columns[5:], axis=1, inplace=True)
+    #2010/10/01は東証のシステムエラーのため、データから除去
+    df.drop(df.loc[df["日付"]=="2020/10/01"].index, inplace=True)
+    #データの古い順にsort
+    df = df.iloc[::-1]
+    #indexの番号が変わっていないので振り直す
+    df.reset_index(drop=True,inplace=True)
+    #csvデータの価格表示が",”を含んだ文字列型となっているので、取り除いてfloat型にキャスト
+    for name in df:
+        df[name] = df.loc[:, name].str.replace(",", "")
+    df = df.astype({"始値": "float", "高値":"float", "安値":"float", "終値":"float"})
+    return df
 
 #時系列データcsvファイルから[日付、始値、高値、安値、終値]だけを抽出し、データの古い順にソートしてリスト化する関数
 def get_data_from_csv(fileName):
@@ -74,3 +93,62 @@ def  judge_full_return(open_price_yesterday, high_price_yesterday, low_price_yes
         return 0
     else:
         return 0
+
+#Dataframe型のi番目のデータから、直近n日間のATRを算出する関数(i:index, n:duration)
+def calc_ATR(df, index, duration):
+    temp_df = df.loc[index-duration:index-1]
+    print(temp_df)
+    atr = st.mean([data["高値"] - data["安値"] for index, data in temp_df.iterrows()]) 
+    # print("ATR:{}".format(atr))
+    return atr
+
+#Dataframe型のi番目の日の寄付きにエントリーしてn日間保有した場合のトレード損益を算出する関数。ロスカット条件はATR*α(α:修正係数)以上の値幅逆行した場合。holding_dayは当日を含む。
+def calc_PL_with_open(df, index, position, holding_days, duration, α):
+    entry_price = df.loc[index, "始値"]
+    exit_price = df.loc[index+holding_days-1,"終値"]
+    losscut_range = calc_ATR(df, index, duration) * α
+    print("ポジション:{}".format(position))
+    print("エントリー価格：{}".format(entry_price))
+    print("ロスカット幅(ATR)：{}".format(losscut_range))
+    #ロングの場合
+    if(position == "l"):
+        #逆指値にタッチしたら値の書き換え
+        for i, data in df.loc[index:index+holding_days-1].iterrows():
+            print(data)
+            if(data["始値"] <= entry_price - losscut_range):
+                print("寄付きにロスカットされました！！！")
+                exit_price = data["始値"]
+                break
+            elif(data["安値"] <= entry_price - losscut_range):
+                print("場中にロスカットされました")
+                exit_price = entry_price - losscut_range
+                break
+        print("決済価格：{}".format(exit_price))
+        pl = (exit_price - entry_price)
+    #ショートの場合
+    elif(position == "s"):
+        #逆指値にタッチしたら値の書き換え
+        for i, data in df.loc[index:index+holding_days-1].iterrows():
+            print(data)
+            if(data["始値"] >= entry_price + losscut_range):
+                print("寄付きにロスカットされました！！！")
+                print(data["日付"])
+                exit_price = data["始値"]
+                break
+            elif(data["高値"] >= entry_price + losscut_range):
+                print("場中にロスカットされました")
+                print(data["日付"])
+                exit_price = entry_price + losscut_range
+                break
+        print("決済価格：{}".format(exit_price))
+        pl = entry_price - exit_price
+    print("pl(修正前):{}円".format(pl))
+    pl = pl/losscut_range
+    print("pl(修正後):{}pt".format(pl))
+
+    #それ以外の場合はエラーを返す
+    # else:
+    #     print("無効な値がはいっています。l or s")
+    #     raise ValueError
+
+    return pl
