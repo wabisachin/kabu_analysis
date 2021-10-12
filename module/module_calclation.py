@@ -47,6 +47,24 @@ total_P(利益の合計額), total_L(損失の合計額), max_P（最大利益pt
 #-------------------------------以下、module↓--------------------------------------------
 
 import csv
+import pandas as pd
+
+#時系列データ(.csv)から[日付、始値、高値、安値、終値]を抽出し、Dataflame型に変換する関数
+def get_data(fileName):
+
+    df= pd.read_csv(fileName)
+    df.drop(df.columns[5:], axis=1, inplace=True)
+    #2010/10/01は東証のシステムエラーのため、データから除去
+    df.drop(df.loc[df["日付"]=="2020/10/01"].index, inplace=True)
+    #データの古い順にsort
+    df = df.iloc[::-1]
+    #indexの番号が変わっていないので振り直す
+    df.reset_index(drop=True,inplace=True)
+    #csvデータの価格表示が",”を含んだ文字列型となっているので、取り除いてfloat型にキャスト
+    for name in df:
+        df[name] = df.loc[:, name].str.replace(",", "")
+    df = df.astype({"始値": "float", "高値":"float", "安値":"float", "終値":"float"})
+    return df
 
 #時系列データcsvファイルから[日付、始値、高値、安値、終値]だけを抽出し、データの古い順にソートしてリスト化する関数
 def get_data_from_csv(fileName):
@@ -78,9 +96,40 @@ def data_shaping_from_investing(fileName):
         for row in writer:
             print(row[0])
 
+#Dataframe型でまとめられたトレード結果の集計。３つの売買区分別（合算、ロング、ショート）に集計して結果を返す
+def summary_PL(trade_result, display=1):
+    #目的の変数定義
+    results  = pd.DataFrame(index=["ls", "l", "s"], columns=["N", "N_P", "N_L", "total_P", "total_L", "max_P", "max_L", "max_NP", "max_NP"])
+    trades = {"ls": trade_result, "l": trade_result.loc[trade_result["position"] == "l"], "s": trade_result.loc[trade_result["position"] == "s"]}
+    #データ要素0埋め
+    results.fillna(0, inplace=True)
+
+    for index, result in results.iterrows():
+        #テーブルに値を代入
+        results.loc[index,"N"] = len(trades[index])
+        results.loc[index, "N_P"] = len(trades[index].query("pl>=0"))
+        results.loc[index, "N_L"] = len(trades[index].query("pl<0"))
+        results.loc[index, "total_P"] = trades[index].query("pl>=0")["pl"].sum()
+        results.loc[index, "total_L"] = trades[index].query("pl<0")["pl"].sum()
+        results.loc[index, "max_P"] = trades[index].describe().loc["max", "pl"]
+        results.loc[index, "max_L"] = trades[index].describe().loc["min", "pl"]
+
+    if(display==1):
+        for index, result in results.iterrows():
+            print("---------------------{}のresult-------------------".format(index))
+            print(trades[index])
+            print("")
+            print("<summary>".format(index))
+            print(result)
+        
+    return results
+
+    
+
+
 
 #トレード結果の集計。３つの売買区分（合算、ロング、ショート）別に集計して、結果を返す。
-def summary_PL(trade_list, display=1):
+def summary_PL_old(trade_list, display=1):
 
     #目的の変数定義
     result = {}
@@ -228,7 +277,7 @@ def summary_PL(trade_list, display=1):
     return result
 
 #期待値を算出する関数
-def calc_EV(trade_list):
+def calc_EV_old(trade_list):
     
     #変数、データ構造定義
     result = {"ls":{}, "l":{}, "s":{}}
@@ -236,7 +285,7 @@ def calc_EV(trade_list):
     result["l"]={"PL":0, "PO":0, "win_rate":0, "EV":0, "P_AVE":0, "L_AVE":0}
     result["s"]={"PL":0, "PO":0, "win_rate":0, "EV":0, "P_AVE":0, "L_AVE":0}
 
-    data = summary_PL(trade_list, display=0)
+    data = summary_PL_old(trade_list, display=0)
 
     keys = result.keys()
     

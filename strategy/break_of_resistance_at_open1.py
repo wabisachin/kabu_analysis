@@ -67,24 +67,25 @@ total_P(利益の合計額), total_L(損失の合計額), max_P（最大利益pt
 import pandas as pd
 import datetime as dt
 import statistics as st
-import module.module as md
+# import module.module as md
+import strategy.module.module as md#最終的に一階層上のexection.pyから実行することになるので、その位置からのパスを明示しなければならない。
 
 #pandasのオプション設定
 pd.set_option("display.max_rows", None)
 
 # dataset = md.get_data("../dataset/nikkei225_daily/nikkei225_2006.csv")
 # dataset = md.get_data("../dataset/sample_dataset/9984_5year.csv")
-dataset = md.get_data("../dataset/NI225/nikkei225_20010903_20210930.csv")
-# print(type(dataset.loc[241, "高値"]))
+# dataset = md.get_data("../dataset/NI225/nikkei225_20010903_20210930.csv")
 
 # 今回はpandasのDataframe型を利用する
-def break_of_resistance_at_open1(dataset, code, holding_days=0, duration=20, threshold=5, α=1):
+def break_of_resistance_at_open1(dataset, code, holding_days=0, duration=0, threshold=0, α=1):
 
     # 戻り値の変数定義
     trades = pd.DataFrame(columns=["date", "code", "position", "pl", "breaked"]) #各トレード結果のリストを格納。breakedは期間にブレイクされた日数
     params = [] #各パラメータを格納 ※リスト番号はdef定義時の引数の順番に対応（data_set,codeは除く)
 
-    #変数定義
+    #tradesのデータ構造をキャスト
+    trades["breaked"] = trades["breaked"].astype(int)
 
     #一時変数定義
     # trade = pd.DataFrame(columns=['date', 'code', 'position', 'pl']) #個々のトレードの結果を格納する変数
@@ -161,8 +162,8 @@ def break_of_resistance_at_open1(dataset, code, holding_days=0, duration=20, thr
             print(trade)
             #トレード結果をテーブルへ追加
             trades = trades.append(trade,ignore_index=True)
+
         #次のループへのパラメータ調整
-        # trade = pd.DataFrame(columns=['date', 'code', 'position', 'pl'])
         counter_breaked = 0
         atr = 0
         position = ""
@@ -171,9 +172,8 @@ def break_of_resistance_at_open1(dataset, code, holding_days=0, duration=20, thr
 
 
 
-summary = break_of_resistance_at_open1(dataset, "sample", 3, 20, 8)
-result = summary["result"]
-print("------------結果---------------")
-print(result)
-print(result.describe())
-# print(dataset)
+# summary = break_of_resistance_at_open1(dataset, "sample", 3, 20, 8)
+# result = summary["result"]
+# print("------------結果---------------")
+# print(result)
+# print(result.describe())
