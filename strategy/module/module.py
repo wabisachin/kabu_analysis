@@ -97,7 +97,7 @@ def  judge_full_return(open_price_yesterday, high_price_yesterday, low_price_yes
 #Dataframe型のi番目のデータから、直近n日間のATRを算出する関数(i:index, n:duration)
 def calc_ATR(df, index, duration):
     temp_df = df.loc[index-duration:index-1]
-    print(temp_df)
+    # print(temp_df)
     atr = st.mean([data["高値"] - data["安値"] for index, data in temp_df.iterrows()]) 
     # print("ATR:{}".format(atr))
     return atr
@@ -107,44 +107,44 @@ def calc_PL_with_open(df, index, position, holding_days, duration, α):
     entry_price = df.loc[index, "始値"]
     exit_price = df.loc[index+holding_days-1,"終値"]
     losscut_range = calc_ATR(df, index, duration) * α
-    print("ポジション:{}".format(position))
-    print("エントリー価格：{}".format(entry_price))
-    print("ロスカット幅(ATR)：{}".format(losscut_range))
+    # print("ポジション:{}".format(position))
+    # print("エントリー価格：{}".format(entry_price))
+    # print("ロスカット幅(ATR)：{}".format(losscut_range))
     #ロングの場合
     if(position == "l"):
         #逆指値にタッチしたら値の書き換え
         for i, data in df.loc[index:index+holding_days-1].iterrows():
-            print(data)
+            # print(data)
             if(data["始値"] <= entry_price - losscut_range):
-                print("寄付きにロスカットされました！！！")
+                # print("寄付きにロスカットされました！！！")
                 exit_price = data["始値"]
                 break
             elif(data["安値"] <= entry_price - losscut_range):
-                print("場中にロスカットされました")
+                # print("場中にロスカットされました")
                 exit_price = entry_price - losscut_range
                 break
-        print("決済価格：{}".format(exit_price))
+        # print("決済価格：{}".format(exit_price))
         pl = (exit_price - entry_price)
     #ショートの場合
     elif(position == "s"):
         #逆指値にタッチしたら値の書き換え
         for i, data in df.loc[index:index+holding_days-1].iterrows():
-            print(data)
+            # print(data)
             if(data["始値"] >= entry_price + losscut_range):
-                print("寄付きにロスカットされました！！！")
-                print(data["日付"])
+                # print("寄付きにロスカットされました！！！")
+                # print(data["日付"])
                 exit_price = data["始値"]
                 break
             elif(data["高値"] >= entry_price + losscut_range):
-                print("場中にロスカットされました")
-                print(data["日付"])
+                # print("場中にロスカットされました")
+                # print(data["日付"])
                 exit_price = entry_price + losscut_range
                 break
-        print("決済価格：{}".format(exit_price))
+        # print("決済価格：{}".format(exit_price))
         pl = entry_price - exit_price
-    print("pl(修正前):{}円".format(pl))
+    # print("pl(修正前):{}円".format(pl))
     pl = pl/losscut_range
-    print("pl(修正後):{}pt".format(pl))
+    # print("pl(修正後):{}pt".format(pl))
 
     #それ以外の場合はエラーを返す
     # else:

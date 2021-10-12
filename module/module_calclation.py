@@ -48,6 +48,7 @@ total_P(利益の合計額), total_L(損失の合計額), max_P（最大利益pt
 
 import csv
 import pandas as pd
+from pandas.tseries.offsets import Nano
 
 #時系列データ(.csv)から[日付、始値、高値、安値、終値]を抽出し、Dataflame型に変換する関数
 def get_data(fileName):
@@ -103,7 +104,8 @@ def summary_PL(trade_result, display=1):
     trades = {"ls": trade_result, "l": trade_result.loc[trade_result["position"] == "l"], "s": trade_result.loc[trade_result["position"] == "s"]}
     #データ要素0埋め
     results.fillna(0, inplace=True)
-
+    # print("------check------")
+    # print(trades)
     for index, result in results.iterrows():
         #テーブルに値を代入
         results.loc[index,"N"] = len(trades[index])
@@ -124,7 +126,47 @@ def summary_PL(trade_result, display=1):
         
     return results
 
+#期待値を算出する関数(dataFrame型version)
+# result = {"ls":{}, "l":{}, "s":{}}
+#     result["ls"]={"PL":0, "PO":0, "win_rate":0, "EV":0, "P_AVE":0, "L_AVE":0}
+#     result["l"]={"PL":0, "PO":0, "win_rate":0, "EV":0, "P_AVE":0, "L_AVE":0}
+#     result["s"]={"PL":0, "PO":0, "win_rate":0, "EV":0, "P_AVE":0, "L_AVE":0}
+
+def calc_EV(trade_result, display=1):
+
+    #目的変数の構造
+    results = pd.DataFrame(index=["ls", "l", "s"], columns=["N", "PL","EV", "PF", "win_rate", "PO", "P_AVE", "L_AVE"])
+
+    summary = summary_PL(trade_result, display=0)
+
+    for index, row in summary.iterrows():
+        results.loc[index, "N"] = row["N"]
+        results.loc[index, "PL"] = row["total_P"]+row["total_L"]
+        results.loc[index, "EV"] = (row["total_P"]+row["total_L"])/row["N"] if row["N"]!=0 else "-"
+        results.loc[index, "PF"] = row["total_P"]/row["total_L"]*(-1) if row["total_L"]!=0 else "-"
+        results.loc[index, "win_rate"] = row["N_P"]/row["N"] if row["N"]!=0 else "-"
+        results.loc[index, "P_AVE"] = row["total_P"]/row["N_P"] if row["N_P"]!=0 else "-"
+        results.loc[index, "L_AVE"] = row["total_L"]/row["N_L"]if row["N_L"]!=0 else "-"
+        results.loc[index, "PO"] = results.loc[index, "P_AVE"]/results.loc[index, "L_AVE"]*(-1) if results.loc[index, "L_AVE"]!=0 else "-"
     
+    if(display==1):
+        trades = {"ls": trade_result, "l": trade_result.loc[trade_result["position"] == "l"], "s": trade_result.loc[trade_result["position"] == "s"]}
+        for index, result in results.iterrows():
+
+            print("---------------------{}のresult-------------------".format(index))
+            print(trades[index])
+            print("")
+            print("[summary]")
+            print(summary.loc[index,:])
+            print("")
+            print("[EV]")
+            print(result)
+
+    return results
+
+
+
+
 
 
 

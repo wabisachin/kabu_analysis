@@ -38,7 +38,7 @@ for data_name in selected_dataset:
     
     data = mc.get_data("{}".format(data_name))
     code = data_name.replace(datasets[selected_label] + "/", "").replace(".csv", "")#ファイル名の拡張子（.csv）を取り除いた銘柄コード
-
+    print(code)
     #手法検証開始
     summary = eval("tc.{}(data, code, *params)".format(selected_method))
 
@@ -47,11 +47,11 @@ for data_name in selected_dataset:
     
     results = results.append(result)
 
-print(results)
+# print(results)
 
-results = mc.summary_PL(results)
+ev = mc.calc_EV(results)
 print("")
 print("-----------------最終結果まとめ------------------")
 print("")
-print(results)
+print(ev)
 print("")

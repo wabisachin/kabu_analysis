@@ -68,14 +68,10 @@ import pandas as pd
 import datetime as dt
 import statistics as st
 # import module.module as md
-import strategy.module.module as md#最終的に一階層上のexection.pyから実行することになるので、その位置からのパスを明示しなければならない。
+import strategy.module.module as md#最終的に一階層上のexection.pyから実行することになるので、その位置からのパスを明示しないとエラーとなる。
 
 #pandasのオプション設定
 pd.set_option("display.max_rows", None)
-
-# dataset = md.get_data("../dataset/nikkei225_daily/nikkei225_2006.csv")
-# dataset = md.get_data("../dataset/sample_dataset/9984_5year.csv")
-# dataset = md.get_data("../dataset/NI225/nikkei225_20010903_20210930.csv")
 
 # 今回はpandasのDataframe型を利用する
 def break_of_resistance_at_open1(dataset, code, holding_days=0, duration=0, threshold=0, α=1):
@@ -127,8 +123,6 @@ def break_of_resistance_at_open1(dataset, code, holding_days=0, duration=0, thre
         #例外処理１：ストップ高（ストップ安）張り付きはエントリーできないので除外
         if (data["始値"] == data["高値"] and data["高値"] == data["安値"] and data["安値"] == data["終値"] and abs(dataset.loc[index-1, "終値"]- dataset.loc[index, "始値"])/dataset.loc[index, "始値"] > 0.1):
             continue    
-        # print("----------")
-        # print(data)
 
         open_today = data["始値"]
         close_yesterday = dataset.loc[index-1, "終値"]
@@ -137,29 +131,25 @@ def break_of_resistance_at_open1(dataset, code, holding_days=0, duration=0, thre
         
         #GUなら高値ブレイク本数のカウント
         if(open_today > close_yesterday):
-            # print(data["日付"])
-            # print(data)
-            print(len(dataset.loc[index-duration:index-1].query("高値<@open_today & @close_yesterday<高値")))
+            # print(len(dataset.loc[index-duration:index-1].query("高値<@open_today & @close_yesterday<高値")))
             counter_breaked = len(dataset.loc[index-duration:index-1].query("高値<@open_today & @close_yesterday<高値"))
             position = "l"
             
         #GDなら安値ブレイク本数のカウント
         elif(open_today < close_yesterday):
-            # print(data["日付"])
-            # print(data)
-            print(len(dataset.loc[index-duration:index-1].query("安値 < @close_yesterday & @open_today < 安値")))
+            # print(len(dataset.loc[index-duration:index-1].query("安値 < @close_yesterday & @open_today < 安値")))
             counter_breaked = len(dataset.loc[index-duration:index-1].query("安値 < @close_yesterday & @open_today < 安値"))
             position = "s"
 
         #閾値を超えた日はエントリー！trade結果を集計
         if(counter_breaked >= threshold):  
-            print("閾値を超えました！")   
+            # print("閾値を超えました！")   
             pl = md.calc_PL_with_open(dataset, index, position, holding_days, 5, α)
-            print(position)
-            print(pl)
+            # print(position)
+            # print(pl)
             #今回のトレード結果
             trade = pd.Series([data["日付"], code, position, pl, counter_breaked],index=["date", "code", "position", "pl", "breaked"])
-            print(trade)
+            # print(trade)
             #トレード結果をテーブルへ追加
             trades = trades.append(trade,ignore_index=True)
 
@@ -172,8 +162,13 @@ def break_of_resistance_at_open1(dataset, code, holding_days=0, duration=0, thre
 
 
 
-# summary = break_of_resistance_at_open1(dataset, "sample", 3, 20, 8)
-# result = summary["result"]
-# print("------------結果---------------")
-# print(result)
-# print(result.describe())
+# dataset = md.get_data("../dataset/nikkei225_daily/nikkei225_2006.csv")
+# dataset = md.get_data("../dataset/sample_dataset/2150_5year.csv")
+dataset = md.get_data("../dataset/data_market_capitalization_top100/9984.csv")
+# dataset = md.get_data("../dataset/NI225/nikkei225_20010903_20210930.csv")
+
+summary = break_of_resistance_at_open1(dataset, "sample", 3, 20, 8)
+result = summary["result"]
+print("------------結果---------------")
+print(result)
+print(result.describe())
