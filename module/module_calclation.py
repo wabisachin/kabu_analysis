@@ -48,7 +48,6 @@ total_P(利益の合計額), total_L(損失の合計額), max_P（最大利益pt
 
 import csv
 import pandas as pd
-from pandas.tseries.offsets import Nano
 
 #時系列データ(.csv)から[日付、始値、高値、安値、終値]を抽出し、Dataflame型に変換する関数
 def get_data(fileName):

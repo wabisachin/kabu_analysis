@@ -21,26 +21,42 @@ total_P(利益の合計額), total_L(損失の合計額), max_P（最大利益pt
 7: EV=PL/N=PO*win_rate-(1-winrate)（１トレード当たりの期待値pt）
 
 
-<手法関数作成の目的とゴール>
+<関数作成の目的>
 
-各手法関数作成における目的は、ノイズを除去できる最小限のエントリー条件を指定して、
-そのエントリー条件に合致するトレードを期間データの中から全て漏れなく抽出し、その結果をDataFrame型データとしてまとめることである。
+関数作成における目的は、
+1: ノイズを除去できる最小限のエントリー条件を指定して、
+2: その条件に見合うトレードをサンプルデータの中から全て漏れなく抽出し
+3: その結果をDataFrame型のデータとしてまとめる
+ことである。
 
-ここで、最小限のエントリー条件に用いるパラメータ数値は、あくまでスクリーニングとしての意味合いであることに注意する。
+ここで、1:最小限のエントリー条件を設定するために適切なパラメータを指定しなければならない。
+ただし、ここでの目的はあくまでスクリーニングとしての機能を果たすことにあるので、ノイズを除去できる程度の小さな数字が妥当といえる。
+この値が大きすぎると、優位性のある領域をノイズとして除外してしまうリスクが生じる。
+
 (スクリーニング条件としてのパラメータが持つ意味と、検証における説明変数としてのパラメータの意味を混同していたので注意)
 
-この意味を踏まえると、手法関数(func_method)実行時に引数として渡すエントリー条件のパラメータ（今回であれば、GU判定の閾値）はあくまでスクリーニング機能としての数値なので、ノイズを除去できそうな基準の最小値を最初に設定して以降、一切イジる必要のない数値である。
-各トレード結果の説明変数としてのパラメータX1は、後に目的変数Y（pl）と一緒にDataFrame型の要素として保持することになるので、スクリーニング条件を始めから厳しく設定しすぎる必要はない。ノイズによるデータ量を削減できる程度であればいい。
+この意味を踏まえると、手法関数(func_method)実行時に引数として渡すパラメータ値はあくまでスクリーニングを果たすだけのものなので、
+データ量が多くて検証に時間がかかる場合を除いて、一度設定したパラメータ値は基本的にその後いじることはない。
+
+各トレード結果の説明変数としてのパラメータX1は、後に目的変数Y（pl）と一緒にDataFrame型の要素として保持することになるので、スクリーニング条件を始めから厳しく設定しすぎる必要はない。
 
 <関数(func_method)の作成ルール>
 
 関数ファイル作成時には２つのルールを遵守する。
 
-作成ルール1:
+[ルール1]
 
 関数名は必ずファイル名と一致していること。(ファイル名:func_method.py　→　関数名:funk_method)
 
-作成ルール2:
+[ルール２]
+
+ファイル名の命名規則は以下のルールを守る。
+
+(エントリータイミング)_(順張りor逆張り/follow or resist)_(決済タイミング)_(スクリーニングに用いた説明変数).py
+
+<例>寄付での順張りエントリー,大引け返済ルールの手法ならopen_follow_close_X1.py
+
+[ルール3]
 
 DataFrame型のテーブルとしてまとめられた各トレード結果は以下のcolumn要素を持つデータとして格納される。
 
@@ -68,7 +84,7 @@ Y:pl(損益)
 X1: 当日寄付価格の前日に対するGU幅(直近２０日のATRに対する比率で計算)
 X2: 当日の出来高規模（直近２０日の出来高平均に対する比率で計算)
 X3: 前日引け~当日寄付までの間に直近２０日の高値を巻き込んだ本数
-X4: 直近６０日間に、当日寄付で依然として高値を巻き込めていない本数
+X4: 直近６０日間に、当日寄付で依然として上にある高値の本数
 X5: 前日引け~当日寄付きまでの間に、連続して高値を巻き込んだ本数
 X6: 決算発表が前日にあったかどうか
 X7: 寄付の約定枚数(直近20日の出来高平均に対する比率)
@@ -76,75 +92,79 @@ X8: 寄付の約定枚数(発行済株式数に対する比率)
 X9: 寄付の約定枚数(浮動株に対する比率)
 X10:当日時点に残った信用買いの浮動株に対する割合
 X11:当日時点に残った信用売りの浮動株に対する割合
+
+このうち値の導出にパラメータを必要とするのはX1,X2, X3, X4。
 """
-
-
 
 #----------------------------------------------以下、プログラム開始↓↓↓-------------------------------------------------------
 
-#この手法の概要
+#この手法の概要（スクリーニング条件）
 """
-寄付タイミングでの抵抗線ブレイク銘柄の順張り手法。抵抗ブレイク条件は前日の大引けから当日の寄付価格の間で、直近n日間の高値をx本以上ブレイクしたかで判定。(ショートはその逆)。nの初期値は20日。
+寄付でエントリーして、〇日後の大引けで決済する順張り手法の検証。
 """
 
-#トレード戦略（エントリー、決済ロスカット条件、その他の付加条件等）
+#スクリーニング条件
 """
-エントリー条件１:直近20日間の高値をx本以上,上回って寄付いたらロングエントリー
-エントリー条件２:直近20日間の安値をx本以上,下回って寄り付いたらショートエントリー
+当日のGU/GD幅(説明変数X1)が最低でもATR以上
+"""
+
+#トレード戦略（エントリー、決済ロスカット条件）
+"""
+
+エントリー条件１:当日寄付きが前日引けに比べてATR幅より高い(GU)ならロングエントリー(ATR:直近20日)
+エントリー条件２:当日寄付きが前日引けに比べてATR幅より安い(GD)ならショートエントリー
 
 決済条件１：利確条件は保有日数経過による大引け決済のみ。利食い指値は設定しない
 決済条件２：保有期間中、直近２０日間のATRに倍率α（初期値:１)を掛けた値幅分逆行したらロスカット
 
-備考１:寄付き価格と参照価格が同値なら本数ｘにカウントしない
 """
 
 import pandas as pd
 import datetime as dt
 import statistics as st
-# import module.module as md
-import strategy.module.module as md#最終的に一階層上のexection.pyから実行することになるので、その位置からのパスを明示しないとエラーとなる。
+import module.module as md
+
+#exection.pyで実行する場合はこっちを有効。
+# import strategy.module.module as md#最終的に一階層上のexection.pyから実行することになるので、その位置からのパスを明示しないとエラーとなる。
 
 #pandasのオプション設定
 pd.set_option("display.max_rows", None)
 
+# #固定パラメータ
+# params_fixed={duration: 20,}
+
+#閾値(threshold)
+
 # 今回はpandasのDataframe型を利用する
-def break_of_resistance_at_open1(dataset, code, holding_days=0, duration=0, threshold=0, α=1):
+def open_follow_close_X1(dataset, code, holding_days, α=1, params_x1=20, params_x2=20, params_x3=20, prames_X4=60):#入力パラメータは基本的には保有日数のみでいい。
 
     # 戻り値の変数定義
-    trades = pd.DataFrame(columns=["date", "code", "position", "pl", "breaked"]) #各トレード結果のリストを格納。breakedは期間にブレイクされた日数
-    params = [] #各パラメータを格納 ※リスト番号はdef定義時の引数の順番に対応（data_set,codeは除く)
+    trades = pd.DataFrame(columns=["date", "code", "position", "pl", "X1", "X2", "X3", "X4", "X5"]) #各トレード結果のリストを格納。breakedは期間にブレイクされた日数,ratioはギャップ幅とATRとの比率
+    params = [] #保有日数、LC乗数値α、各説明変数に使用したパラメータ値(X1, X2, X3, X4)を格納 ※リスト番号はdef定義時の引数の順番に対応（data_set,codeは除く)
 
     #tradesのデータ構造をキャスト
-    trades["breaked"] = trades["breaked"].astype(int)
+
+    trades["pl"] = trades["pl"].astype(float)
+    trades["X1"] = trades["X1"].astype(int)
+    trades["X2"] = trades["X2"].astype(int)
+    trades["X3"] = trades["X3"].astype(int)
+    trades["X4"] = trades["X4"].astype(int)
+    trades["X5"] = trades["X5"].astype(int)
 
     #一時変数定義
     position = "" #トレードの売買種別（L ro S)を格納
-    counter_breaked = 0#直近何本の高値/安値がブレイクされたか
+    # counter_breaked = 0#直近何本の高値/安値がブレイクされたか
     ath = 0 #ATH(直近ｎ日間における一日の平均ボラティレティ)
 
-    #検証のガイドライン(初回のみ表示させるためのif分)
-    if(holding_days == 0 and duration==0 and threshold==0):
-        #手法の概要説明
-        print("<この手法の概要>")
-        description = "寄付きタイミングでの抵抗線ブレイク順張り手法。ブレイク判定は直近n日間の高値をx本寄付き時点で抜けていたらロングエントリー。ショートはその逆"
-        print(description)
-
-        #手法のパラメータ説明
-        print("<必要となるパラメータ>")
-        description = "保有日数（holding_days),直近判定期間(duration、初期値は２０日),閾値（threshold,初期値は５本）"
-        print(description)
+    #検証パラメータのユーザー設定(初回のみ表示させるためのif分)
+    if(holding_days == 0):
 
         #検証初回はパラメータを入力させる
         print("パラメータ１：保有日数を入力してください")
         holding_days = int(input())
         params.append(holding_days)
-        print("パラメータ２：直近判定期間を設定(duration)")
-        duration = int(input())
-        params.append(duration)
-        print("パラメータ３：閾値（何本以上で抵抗ブレイク判定を出すか）を設定(threshold)")
-        threshold = int(input())
-        params.append(threshold)
-
+        
+    #検証
     for index, data in dataset.iterrows():
 
         #データの先頭からX日間前のデータｈ参照できないのでスキップ（X:duration)
@@ -197,7 +217,7 @@ def break_of_resistance_at_open1(dataset, code, holding_days=0, duration=0, thre
 
 # dataset = md.get_data("../dataset/nikkei225_daily/nikkei225_2006.csv")
 # dataset = md.get_data("../dataset/sample_dataset/2929_5year.csv")
-# dataset = md.get_data("../dataset/data_market_capitalization_top100/7751.csv")
+# dataset = md.get_data("../dataset/data_market_capitalization_top100/9984.csv")
 # dataset = md.get_data("../dataset/NI225/nikkei225_20010903_20210930.csv")
 
 # summary = break_of_resistance_at_open1(dataset, "sample", 3, 20, 8)
