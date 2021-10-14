@@ -28,7 +28,7 @@ print("<検証した分析手法の番号を選択してください(半角数�
 selected_method_label = int(input())
 selected_method = strategys_name[selected_method_label]
 #選択された分析手法のmoduleをimport
-exec("import strategy.{} as tc".format(selected_method))
+exec("import strategy.{} as st".format(selected_method))
 
 #変数定義
 results = pd.DataFrame() #全銘柄のトレード結果を格納
@@ -37,10 +37,11 @@ params = [] #設定パラメータを保持
 for data_name in selected_dataset:
     
     data = mc.get_data("{}".format(data_name))
+    # print(data)
     code = data_name.replace(datasets[selected_label] + "/", "").replace(".csv", "")#ファイル名の拡張子（.csv）を取り除いた銘柄コード
     print(code)
     #手法検証開始
-    summary = eval("tc.{}(data, code, *params)".format(selected_method))
+    summary = eval("st.{}(data, code, *params)".format(selected_method))
 
     result = summary["result"]
     params = summary["params"] if params == [] else params#ループ中、何度も同じパラメータを入力させられる手間を省くための処理
@@ -48,10 +49,21 @@ for data_name in selected_dataset:
     results = results.append(result)
 
 # print(results)
+print("------------結果---------------")
+print(results)
+print(results.describe())
+print("----------x2>2の結果------------")
+print(results.loc[results["x2"] > 2].describe())
+print("----------x2>3の結果------------")
+print(results.loc[results["x2"] > 3].describe())
+print("----------x2>5の結果------------")
+print(results.loc[results["x2"] > 5].describe())
+print("----------x2>7の結果------------")
+print(results.loc[results["x2"] > 7].describe())
 
-ev = mc.calc_EV(results)
-print("")
-print("-----------------最終結果まとめ------------------")
-print("")
-print(ev)
-print("")
+# ev = mc.calc_EV(results)
+# print("")
+# print("-----------------最終結果まとめ------------------")
+# print("")
+# print(ev)
+# print("")

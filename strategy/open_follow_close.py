@@ -84,7 +84,7 @@ Y:pl(損益)
 X1: 当日寄付価格の前日に対するGU幅(直近２０日のATRに対する比率で計算)
 X2: 当日の出来高規模（直近２０日の出来高平均に対する比率で計算)
 X3: 前日引け~当日寄付までの間に直近２０日の高値を巻き込んだ本数
-X4: 直近６０日間に、当日寄付で依然として上にある高値の本数
+X4: 直近６０日間に、当日寄付時点で依然として上にある高値の本数
 X5: 前日引け~当日寄付きまでの間に、連続して高値を巻き込んだ本数
 X6: 決算発表が前日にあったかどうか
 X7: 寄付の約定枚数(直近20日の出来高平均に対する比率)
@@ -93,7 +93,7 @@ X9: 寄付の約定枚数(浮動株に対する比率)
 X10:当日時点に残った信用買いの浮動株に対する割合
 X11:当日時点に残った信用売りの浮動株に対する割合
 
-このうち値の導出にパラメータを必要とするのはX1,X2, X3, X4。
+このうち値の算出に独自パラメータを必要とするのはX1,X2, X3, X4。
 """
 
 #----------------------------------------------以下、プログラム開始↓↓↓-------------------------------------------------------
@@ -105,14 +105,14 @@ X11:当日時点に残った信用売りの浮動株に対する割合
 
 #スクリーニング条件
 """
-当日のGU/GD幅(説明変数X1)が最低でもATR以上
+当日のGU/GD幅が前日比２％以上(更新値幅の上限が2％なので、それを超える水準で寄付を迎える場合,必ず特別気配スタートとなる)
 """
 
 #トレード戦略（エントリー、決済ロスカット条件）
 """
 
-エントリー条件１:当日寄付きが前日引けに比べてATR幅より高い(GU)ならロングエントリー(ATR:直近20日)
-エントリー条件２:当日寄付きが前日引けに比べてATR幅より安い(GD)ならショートエントリー
+エントリー条件１:当日寄付きが前日比2％(GU)以上ならロングエントリー
+エントリー条件２:当日寄付きが前日比-2％(GD)以下ならショートエントリー
 
 決済条件１：利確条件は保有日数経過による大引け決済のみ。利食い指値は設定しない
 決済条件２：保有期間中、直近２０日間のATRに倍率α（初期値:１)を掛けた値幅分逆行したらロスカット
@@ -122,40 +122,36 @@ X11:当日時点に残った信用売りの浮動株に対する割合
 import pandas as pd
 import datetime as dt
 import statistics as st
-import module.module as md
-
+# import module.module as md
+# import module.module_calc_variable as mcv
 #exection.pyで実行する場合はこっちを有効。
-# import strategy.module.module as md#最終的に一階層上のexection.pyから実行することになるので、その位置からのパスを明示しないとエラーとなる。
-
+import strategy.module.module as md#最終的に一階層上のexection.pyから実行することになるので、その位置からのパスを明示しないとエラーとなる。
+import strategy.module.module_calc_variable as mcv
 #pandasのオプション設定
 pd.set_option("display.max_rows", None)
 
-# #固定パラメータ
-# params_fixed={duration: 20,}
-
-#閾値(threshold)
-
 # 今回はpandasのDataframe型を利用する
-def open_follow_close_X1(dataset, code, holding_days, α=1, params_x1=20, params_x2=20, params_x3=20, prames_X4=60):#入力パラメータは基本的には保有日数のみでいい。
+def open_follow_close(dataset, code, holding_days=0, α=1, params_x1=20, params_x2=20, params_x3=20, params_x4=60):#入力パラメータは基本的には保有日数のみでいい。
 
     # 戻り値の変数定義
-    trades = pd.DataFrame(columns=["date", "code", "position", "pl", "X1", "X2", "X3", "X4", "X5"]) #各トレード結果のリストを格納。breakedは期間にブレイクされた日数,ratioはギャップ幅とATRとの比率
-    params = [] #保有日数、LC乗数値α、各説明変数に使用したパラメータ値(X1, X2, X3, X4)を格納 ※リスト番号はdef定義時の引数の順番に対応（data_set,codeは除く)
+    trades = pd.DataFrame(columns=["date", "code", "position", "pl", "x1", "x2", "x3", "x4", "x5"]) #各トレード結果のリストを格納。breakedは期間にブレイクされた日数,ratioはギャップ幅とATRとの比率
+    params = [] #保有日数、LC乗数値α、各説明変数に用いたパラメータ値(X1, X2, X3, X4)を格納 ※リスト番号はdef定義時の引数の順番に対応（data_set,codeは除く)
 
     #tradesのデータ構造をキャスト
 
     trades["pl"] = trades["pl"].astype(float)
-    trades["X1"] = trades["X1"].astype(int)
-    trades["X2"] = trades["X2"].astype(int)
-    trades["X3"] = trades["X3"].astype(int)
-    trades["X4"] = trades["X4"].astype(int)
-    trades["X5"] = trades["X5"].astype(int)
+    trades["x1"] = trades["x1"].astype(float)
+    trades["x2"] = trades["x2"].astype(float)
+    trades["x3"] = trades["x3"].astype(int)
+    trades["x4"] = trades["x4"].astype(int)
+    trades["x5"] = trades["x5"].astype(int)
 
     #一時変数定義
     position = "" #トレードの売買種別（L ro S)を格納
-    # counter_breaked = 0#直近何本の高値/安値がブレイクされたか
     ath = 0 #ATH(直近ｎ日間における一日の平均ボラティレティ)
 
+    #独自パラメータが必要な説明変数のパラメータ設定
+    params_duration = [params_x1, params_x2, params_x3, params_x4]
     #検証パラメータのユーザー設定(初回のみ表示させるためのif分)
     if(holding_days == 0):
 
@@ -167,8 +163,12 @@ def open_follow_close_X1(dataset, code, holding_days, α=1, params_x1=20, params
     #検証
     for index, data in dataset.iterrows():
 
+        #トレード結果
+        trade = pd.Series(index=["date", "code", "position", "pl", "x1","x2", "x3", "x4", "x5"])
+
+        #検証前処理
         #データの先頭からX日間前のデータｈ参照できないのでスキップ（X:duration)
-        if(index - duration < 0):
+        if(index - max(params_duration) < 0):
             continue
         #データの終わりからX日間後のデータは参照できないのでスキップ）(X:holding_days)
         if (index + holding_days > len(dataset)):
@@ -176,52 +176,73 @@ def open_follow_close_X1(dataset, code, holding_days, α=1, params_x1=20, params
         #例外処理１：ストップ高（ストップ安）張り付きはエントリーできないので除外
         if (data["始値"] == data["高値"] and data["高値"] == data["安値"] and data["安値"] == data["終値"] and abs(dataset.loc[index-1, "終値"]- dataset.loc[index, "始値"])/dataset.loc[index, "始値"] > 0.1):
             continue    
-
+        
         open_today = data["始値"]
         close_yesterday = dataset.loc[index-1, "終値"]
         # print(open_today)
         # print(close_yesterday)
-        
-        #GUなら高値ブレイク本数のカウント
-        if(open_today > close_yesterday):
-            # print(len(dataset.loc[index-duration:index-1].query("高値<@open_today & @close_yesterday<高値")))
-            counter_breaked = len(dataset.loc[index-duration:index-1].query("高値<@open_today & @close_yesterday<高値"))
-            position = "l"
-            
-        #GDなら安値ブレイク本数のカウント
-        elif(open_today < close_yesterday):
-            # print(len(dataset.loc[index-duration:index-1].query("安値 < @close_yesterday & @open_today < 安値")))
-            counter_breaked = len(dataset.loc[index-duration:index-1].query("安値 < @close_yesterday & @open_today < 安値"))
-            position = "s"
 
-        #閾値を超えた日はエントリー！trade結果を集計
-        if(counter_breaked >= threshold):  
-            # print("閾値を超えました！")   
-            pl = md.calc_PL_with_open(dataset, index, position, holding_days, 5, α)
-            # print(position)
-            # print(pl)
-            #今回のトレード結果
-            trade = pd.Series([data["日付"], code, position, pl, counter_breaked],index=["date", "code", "position", "pl", "breaked"])
-            # print(trade)
-            #トレード結果をテーブルへ追加
+        # 当日始値時点における前日比
+        gap_rate = (open_today - close_yesterday)/close_yesterday
+        print("---gaprate---")
+        print(gap_rate)
+
+        #前日比プラス2％以上なら特別気配確実によりロングエントリー(前日比プラス-2％以下なら特別気配確実によりショートエントリー)
+        if(gap_rate > 0.02 or gap_rate < -0.02):
+
+            trade["date"] = data["日付"]
+            trade["position"] = "l" if gap_rate >0 else "s"
+            trade["code"] = code
+            trade["pl"] = md.calc_pl_with_open(dataset, index, holding_days)
+            trade["x1"] = mcv.calc_x1(dataset, index, params_x1)
+            trade["x2"] = mcv.calc_x2(dataset, index, params_x2)
+            trade["x3"] = mcv.calc_x3(dataset, index, params_x3)
+            trade["x4"] = mcv.calc_x4(dataset, index, params_x4)
+            trade["x5"] = mcv.calc_x5(dataset, index)
+
             trades = trades.append(trade,ignore_index=True)
 
-        #次のループへのパラメータ調整
-        counter_breaked = 0
-        atr = 0
-        position = ""
+        print("----trade結果---")
+        print(trade)
+        
+
+
+        # #GUなら高値ブレイク本数のカウント
+        # if(open_today > close_yesterday):
+        #     # print(len(dataset.loc[index-duration:index-1].query("高値<@open_today & @close_yesterday<高値")))
+        #     counter_breaked = len(dataset.loc[index-params_x3:index-1].query("高値<@open_today & @close_yesterday<高値"))
+        #     position = "l"
+            
+        # #GDなら安値ブレイク本数のカウント
+        # elif(open_today < close_yesterday):
+        #     # print(len(dataset.loc[index-duration:index-1].query("安値 < @close_yesterday & @open_today < 安値")))
+        #     counter_breaked = len(dataset.loc[index-params_x3:index-1].query("安値 < @close_yesterday & @open_today < 安値"))
+        #     position = "s"
+
+        # #閾値を超えた日はエントリー！trade結果を集計
+        # if(counter_breaked >= threshold):  
+        #     # print("閾値を超えました！")   
+        #     pl = md.calc_PL_with_open(dataset, index, position, holding_days, 5, α)
+        #     # print(position)
+        #     # print(pl)
+        #     # print(trade)
+        #     #トレード結果をテーブルへ追加
 
     return {"result": trades, "params": params}
 
 
 
-# dataset = md.get_data("../dataset/nikkei225_daily/nikkei225_2006.csv")
-# dataset = md.get_data("../dataset/sample_dataset/2929_5year.csv")
+# dataset = md.get_data("../dataset/nikkei225_daily/nikkei225_2020.csv")
+# dataset = md.get_data("../dataset/sample_dataset/9984_5year.csv")
 # dataset = md.get_data("../dataset/data_market_capitalization_top100/9984.csv")
 # dataset = md.get_data("../dataset/NI225/nikkei225_20010903_20210930.csv")
 
-# summary = break_of_resistance_at_open1(dataset, "sample", 3, 20, 8)
+
+# print(dataset)
+# summary = open_follow_close(dataset, "sample", 1)
 # result = summary["result"]
 # print("------------結果---------------")
 # print(result)
 # print(result.describe())
+# print("----------x2>2の結果------------")
+# print(result.loc[result["x2"] > 2].describe())

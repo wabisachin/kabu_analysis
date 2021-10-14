@@ -50,10 +50,27 @@ import csv
 import pandas as pd
 
 #時系列データ(.csv)から[日付、始値、高値、安値、終値]を抽出し、Dataflame型に変換する関数
+# def get_data(fileName):
+
+#     df= pd.read_csv(fileName)
+#     df.drop(df.columns[5:], axis=1, inplace=True)
+#     #2010/10/01は東証のシステムエラーのため、データから除去
+#     df.drop(df.loc[df["日付"]=="2020/10/01"].index, inplace=True)
+#     #データの古い順にsort
+#     df = df.iloc[::-1]
+#     #indexの番号が変わっていないので振り直す
+#     df.reset_index(drop=True,inplace=True)
+#     #csvデータの価格表示が",”を含んだ文字列型となっているので、取り除いてfloat型にキャスト
+#     for name in df:
+#         df[name] = df.loc[:, name].str.replace(",", "")
+#     df = df.astype({"始値": "float", "高値":"float", "安値":"float", "終値":"float"})
+#     return df
+
+#時系列データ(.csv)から[日付、始値、高値、安値、終値]を抽出し、Dataflame型に変換する関数
 def get_data(fileName):
 
     df= pd.read_csv(fileName)
-    df.drop(df.columns[5:], axis=1, inplace=True)
+    df.drop(df.columns[7:], axis=1, inplace=True)
     #2010/10/01は東証のシステムエラーのため、データから除去
     df.drop(df.loc[df["日付"]=="2020/10/01"].index, inplace=True)
     #データの古い順にsort
@@ -63,7 +80,7 @@ def get_data(fileName):
     #csvデータの価格表示が",”を含んだ文字列型となっているので、取り除いてfloat型にキャスト
     for name in df:
         df[name] = df.loc[:, name].str.replace(",", "")
-    df = df.astype({"始値": "float", "高値":"float", "安値":"float", "終値":"float"})
+    df = df.astype({"始値": "float", "高値":"float", "安値":"float", "終値":"float","前日比":"float", "出来高":"int"})
     return df
 
 #時系列データcsvファイルから[日付、始値、高値、安値、終値]だけを抽出し、データの古い順にソートしてリスト化する関数
