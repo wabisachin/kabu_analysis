@@ -154,29 +154,21 @@ def calc_x7(df, index):
         
     return flag
 
-def calc_x8(df, df_NI225, index):
+def calc_x8(df ,df_NI225, index):
     # df_NI225 = pd.read_csv("./dataset/NI225/nikkei225_20010903_20210930.csv")
     today = df.loc[index, "日付"]
     yesterday = df.loc[index-1, "日付"]
-    # print(df_NI225["日付"].dtype)
-    # print(type(today))
-    # print("------今日の日付:{}-----".format(today))
-    # print("------昨日の日付:{}-----".format(yesterday))
+    print(df_NI225["日付"].dtype)
+    print(type(today))
+    print("------今日の日付:{}-----".format(today))
 
     today_NI225 = df_NI225.query("日付 == '{}'".format(today))
     # today_NI225 = df_NI225.query("日付 == '2016/12/16'".format(today))
-    # print("-----today_NI225:{}".format(today_NI225))
+    print("-----today_NI225:{}".format(today_NI225))
     # yesterday_NI225 = df_NI225.loc[df["日付"] == yesterday]
-    yesterday_NI225 = df_NI225.query("日付 == '{}'".format(yesterday))
-    # print("-----today_NI225:{}".format(today_NI225[""]))
-    # print(type(today_NI225["始値"]))
-    # print(today_NI225.index)
-    # print("----始値:{}".format(today_NI225["始値"].replace(",", "")))
-    today_NI225_open = float(today_NI225["始値"].iloc[-1].replace(",", ""))
-    yesterday_NI225_close = float(yesterday_NI225["終値"].iloc[-1].replace(",", ""))
-    print("----終値:{}".format(yesterday_NI225_close))
-    ratio = (today_NI225_open - yesterday_NI225_close)/yesterday_NI225_close
-    print("----ratio:{}".format(ratio))
+    yesterday_NI225 = df_NI225.query("日付 == {}".format(yesterday))
+
+    ratio = (today_NI225["始値"] - yesterday_NI225["終値"])/yesterday_NI225["終値"]
 
     return ratio
 

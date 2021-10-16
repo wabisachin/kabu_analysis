@@ -90,14 +90,18 @@ X4: 直近６０日間に、当日寄付時点で依然として上にある高�
 X5: 前日引け~当日寄付きまでの間に、連続して高値を巻き込んだ本数
 X6: 前日がATR幅以上の下落であるかどうか(大陰線全返しの検証)
 X7: 前日が陰線であるかどうか
+X8: 当日寄付の日経の前日比
+
 
 
 # X: 決算発表が前日にあったかどうか
 # X: 寄付の約定枚数(直近20日の出来高平均に対する比率)
 # X: 寄付の約定枚数(発行済株式数に対する比率)
 # X: 寄付の約定枚数(浮動株に対する比率)
-# X:当日時点に残った信用買いの浮動株に対する割合
-# X:当日時点に残った信用売りの浮動株に対する割合
+# X: 当日時点に残った信用買いの浮動株に対する割合
+# X: 当日時点に残った信用売りの浮動株に対する割合
+# X: 当日NY市場の前日比
+# X: 当日USD/JPYの前日比
 
 このうち値の算出に独自パラメータを必要とするのはX1,X2, X3, X4。
 """
@@ -135,12 +139,14 @@ import strategy.module.module as md#最終的に一階層上のexection.pyから
 import strategy.module.module_calc_variable as mcv
 #pandasのオプション設定
 pd.set_option("display.max_rows", None)
+#検証に必要なファイルの事前読み込み
+df_NI225 = pd.read_csv("./dataset/NI225/nikkei225_20010903_20210930.csv")
 
 # 今回はpandasのDataframe型を利用する
 def open_follow_close(dataset, code, holding_days, α, params_x1=20, params_x2=20, params_x3=20, params_x4=60):#入力パラメータは基本的には保有日数のみでいい。
 
     # 戻り値の変数定義
-    trades = pd.DataFrame(columns=["date", "code", "position", "pl_lc","pl_atr",  "x1", "x2", "x3", "x4", "x5", "x6", "x7"]) #各トレード結果のリストを格納。breakedは期間にブレイクされた日数,ratioはギャップ幅とATRとの比率
+    trades = pd.DataFrame(columns=["date", "code", "position", "pl_lc","pl_atr",  "x1", "x2", "x3", "x4", "x5", "x6", "x7", "x8"]) #各トレード結果のリストを格納。breakedは期間にブレイクされた日数,ratioはギャップ幅とATRとの比率
     params = [] #保有日数、LC乗数値α、各説明変数に用いたパラメータ値(X1, X2, X3, X4)を格納 ※リスト番号はdef定義時の引数の順番に対応（data_set,codeは除く)
 
     #tradesのデータ構造をキャスト
@@ -154,6 +160,7 @@ def open_follow_close(dataset, code, holding_days, α, params_x1=20, params_x2=2
     trades["x5"] = trades["x5"].astype(int)
     trades["x6"] = trades["x6"].astype(int)
     trades["x7"] = trades["x7"].astype(int)
+    trades["x8"] = trades["x8"].astype(float)
 
     #一時変数定義
     position = "" #トレードの売買種別（L ro S)を格納
@@ -174,7 +181,7 @@ def open_follow_close(dataset, code, holding_days, α, params_x1=20, params_x2=2
     for index, data in dataset.iterrows():
 
         #トレード結果
-        trade = pd.Series(index=["date", "code", "position", "pl_lc", "pl_atr", "x1","x2", "x3", "x4", "x5", "x6", "x7"])
+        trade = pd.Series(index=["date", "code", "position", "pl_lc", "pl_atr", "x1","x2", "x3", "x4", "x5", "x6", "x7", "x8"])
 
         #検証前処理
         #データの先頭からX日間前のデータｈ参照できないのでスキップ（X:duration)
@@ -194,8 +201,8 @@ def open_follow_close(dataset, code, holding_days, α, params_x1=20, params_x2=2
 
         # 当日始値時点における前日比
         gap_rate = (open_today - close_yesterday)/close_yesterday
-        print("---gaprate---")
-        print(gap_rate)
+        # print("---gaprate---")
+        # print(gap_rate)
 
         #前日比プラス2％以上なら特別気配確実によりロングエントリー(前日比プラス-2％以下なら特別気配確実によりショートエントリー)
         if(gap_rate > 0.02 or gap_rate < -0.02):
@@ -212,11 +219,12 @@ def open_follow_close(dataset, code, holding_days, α, params_x1=20, params_x2=2
             trade["x5"] = mcv.calc_x5(dataset, index)
             trade["x6"] = mcv.calc_x6(dataset, index)
             trade["x7"] = mcv.calc_x7(dataset, index)
+            trade["x8"] = mcv.calc_x8(dataset, df_NI225, index)
 
             trades = trades.append(trade,ignore_index=True)
 
-        print("----trade結果---")
-        print(trade)
+        # print("----trade結果---")
+        # print(trade)
         
 
 
