@@ -108,4 +108,49 @@ def calc_x5(df, index):
         # print(len(df.loc[index-duration:index-1].query("安値 < @close_yesterday & @open_today < 安値")))
         # breaked = len(df.loc[index-duration:index-1].query("安値 < @close_yesterday & @open_today < 安値"))
     return counter
+
+def calc_x6(df, index, duration=20):
+    #戻り値
+    flag = 0
+
+    open_today = df.loc[index, "始値"]
+    close_yesterday = df.loc[index-1, "終値"]
+    open_yesterday = df.loc[index-1, "始値"]
+    atr = calc_ATR(df, index-1, duration)
+    # df_temp = df[:index-1]
+    # #データの古い順にsort
+    # df_temp = df_temp.iloc[::-1]
+    # #indexの番号が変わっていないので振り直す
+    # df_temp.reset_index(drop=True,inplace=True)
+
+    #GUなら大陰線返し判定
+    if(open_today > close_yesterday):
+        if((close_yesterday - open_yesterday) < atr*(-1)):
+            flag = 1
+
+    #GDなら大陽線返し判定
+    elif(open_today < close_yesterday):
+        if((close_yesterday - open_yesterday) > atr):
+            flag = 1
+        
+    return flag
+
+def calc_x7(df, index):
+
+    #戻り値
+    flag = 0
+
+    open_today = df.loc[index, "始値"]
+    close_yesterday = df.loc[index-1, "終値"]
+    open_yesterday = df.loc[index-1, "始値"]
+    
+    #GUなら大陰線返し判定
+    if((open_today > close_yesterday) and (close_yesterday < open_yesterday)):
+        flag = 1
+
+    #GDなら大陽線返し判定
+    elif((open_today < close_yesterday) and (close_yesterday > open_yesterday)):
+        flag = 1
+        
+    return flag
     

@@ -60,7 +60,7 @@ total_P(利益の合計額), total_L(損失の合計額), max_P（最大利益pt
 
 DataFrame型のテーブルとしてまとめられた各トレード結果は以下のcolumn要素を持つデータとして格納される。
 
-column：エントリー日(key:date)、銘柄コード(key:code)、ロングorショートの区別(key:position), pt換算損益(key:pl), 各説明変数X1,X2,X3,・・・・
+column：エントリー日(key:date)、銘柄コード(key:code)、ロングorショートの区別(key:position), pt換算損益(key:pl_lc), 各説明変数X1,X2,X3,・・・・
 
 なお実際の戻り値は、このトレード結果の情報に、使用したパラメータ情報を追加したdict型データとして返される。
 
@@ -78,7 +78,9 @@ column：エントリー日(key:date)、銘柄コード(key:code)、ロングor�
 ※解説はロングポジションの場合。ショートは高値を安値に読み替える。
 
 (目的変数)
-Y:pl(損益)
+Y1:pl_lc(ロスカット幅に対する損益)
+Y2:pl_ATR(ATRに対する損益)
+
 
 (優位性が潜んでいそうな説明変数)
 X1: 当日寄付価格の前日に対するGU幅(直近２０日のATRに対する比率で計算)
@@ -86,12 +88,16 @@ X2: 当日の出来高規模（直近２０日の出来高平均に対する比�
 X3: 前日引け~当日寄付までの間に直近２０日の高値を巻き込んだ本数
 X4: 直近６０日間に、当日寄付時点で依然として上にある高値の本数
 X5: 前日引け~当日寄付きまでの間に、連続して高値を巻き込んだ本数
-X6: 決算発表が前日にあったかどうか
-X7: 寄付の約定枚数(直近20日の出来高平均に対する比率)
-X8: 寄付の約定枚数(発行済株式数に対する比率)
-X9: 寄付の約定枚数(浮動株に対する比率)
-X10:当日時点に残った信用買いの浮動株に対する割合
-X11:当日時点に残った信用売りの浮動株に対する割合
+X6: 前日がATR幅以上の下落であるかどうか(大陰線全返しの検証)
+X7: 前日が陰線であるかどうか
+
+
+# X: 決算発表が前日にあったかどうか
+# X: 寄付の約定枚数(直近20日の出来高平均に対する比率)
+# X: 寄付の約定枚数(発行済株式数に対する比率)
+# X: 寄付の約定枚数(浮動株に対する比率)
+# X:当日時点に残った信用買いの浮動株に対する割合
+# X:当日時点に残った信用売りの浮動株に対する割合
 
 このうち値の算出に独自パラメータを必要とするのはX1,X2, X3, X4。
 """
@@ -131,20 +137,23 @@ import strategy.module.module_calc_variable as mcv
 pd.set_option("display.max_rows", None)
 
 # 今回はpandasのDataframe型を利用する
-def open_follow_close(dataset, code, holding_days=0, α=1, params_x1=20, params_x2=20, params_x3=20, params_x4=60):#入力パラメータは基本的には保有日数のみでいい。
+def open_follow_close(dataset, code, holding_days, α, params_x1=20, params_x2=20, params_x3=20, params_x4=60):#入力パラメータは基本的には保有日数のみでいい。
 
     # 戻り値の変数定義
-    trades = pd.DataFrame(columns=["date", "code", "position", "pl", "x1", "x2", "x3", "x4", "x5"]) #各トレード結果のリストを格納。breakedは期間にブレイクされた日数,ratioはギャップ幅とATRとの比率
+    trades = pd.DataFrame(columns=["date", "code", "position", "pl_lc","pl_atr",  "x1", "x2", "x3", "x4", "x5", "x6", "x7"]) #各トレード結果のリストを格納。breakedは期間にブレイクされた日数,ratioはギャップ幅とATRとの比率
     params = [] #保有日数、LC乗数値α、各説明変数に用いたパラメータ値(X1, X2, X3, X4)を格納 ※リスト番号はdef定義時の引数の順番に対応（data_set,codeは除く)
 
     #tradesのデータ構造をキャスト
 
-    trades["pl"] = trades["pl"].astype(float)
+    trades["pl_lc"] = trades["pl_lc"].astype(float)
+    trades["pl_atr"] = trades["pl_atr"].astype(float)
     trades["x1"] = trades["x1"].astype(float)
     trades["x2"] = trades["x2"].astype(float)
     trades["x3"] = trades["x3"].astype(int)
     trades["x4"] = trades["x4"].astype(int)
     trades["x5"] = trades["x5"].astype(int)
+    trades["x6"] = trades["x6"].astype(int)
+    trades["x7"] = trades["x7"].astype(int)
 
     #一時変数定義
     position = "" #トレードの売買種別（L ro S)を格納
@@ -152,19 +161,20 @@ def open_follow_close(dataset, code, holding_days=0, α=1, params_x1=20, params_
 
     #独自パラメータが必要な説明変数のパラメータ設定
     params_duration = [params_x1, params_x2, params_x3, params_x4]
-    #検証パラメータのユーザー設定(初回のみ表示させるためのif分)
-    if(holding_days == 0):
 
-        #検証初回はパラメータを入力させる
-        print("パラメータ１：保有日数を入力してください")
-        holding_days = int(input())
-        params.append(holding_days)
+    # #検証パラメータのユーザー設定(初回のみ表示させるためのif分)
+    # if(holding_days == 0):
+
+    #     #検証初回はパラメータを入力させる
+    #     print("パラメータ１：保有日数を入力してください")
+    #     holding_days = int(input())
+    #     params.append(holding_days)
         
     #検証
     for index, data in dataset.iterrows():
 
         #トレード結果
-        trade = pd.Series(index=["date", "code", "position", "pl", "x1","x2", "x3", "x4", "x5"])
+        trade = pd.Series(index=["date", "code", "position", "pl_lc", "pl_atr", "x1","x2", "x3", "x4", "x5", "x6", "x7"])
 
         #検証前処理
         #データの先頭からX日間前のデータｈ参照できないのでスキップ（X:duration)
@@ -193,12 +203,15 @@ def open_follow_close(dataset, code, holding_days=0, α=1, params_x1=20, params_
             trade["date"] = data["日付"]
             trade["position"] = "l" if gap_rate >0 else "s"
             trade["code"] = code
-            trade["pl"] = md.calc_pl_with_open(dataset, index, holding_days)
+            trade["pl_lc"] = md.calc_pl_with_open(dataset, index, holding_days, α)
+            trade["pl_atr"] = trade["pl_lc"] * α
             trade["x1"] = mcv.calc_x1(dataset, index, params_x1)
             trade["x2"] = mcv.calc_x2(dataset, index, params_x2)
             trade["x3"] = mcv.calc_x3(dataset, index, params_x3)
             trade["x4"] = mcv.calc_x4(dataset, index, params_x4)
             trade["x5"] = mcv.calc_x5(dataset, index)
+            trade["x6"] = mcv.calc_x6(dataset, index)
+            trade["x7"] = mcv.calc_x7(dataset, index)
 
             trades = trades.append(trade,ignore_index=True)
 
@@ -222,9 +235,9 @@ def open_follow_close(dataset, code, holding_days=0, α=1, params_x1=20, params_
         # #閾値を超えた日はエントリー！trade結果を集計
         # if(counter_breaked >= threshold):  
         #     # print("閾値を超えました！")   
-        #     pl = md.calc_PL_with_open(dataset, index, position, holding_days, 5, α)
+        #     pl_lc = md.calc_PL_with_open(dataset, index, position, holding_days, 5, α)
         #     # print(position)
-        #     # print(pl)
+        #     # print(pl_lc)
         #     # print(trade)
         #     #トレード結果をテーブルへ追加
 

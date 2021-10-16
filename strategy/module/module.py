@@ -107,7 +107,7 @@ def calc_ATR(df, index, duration=20):
 #目的変数PLの算出
 
 #Dataframe型のi番目の日の寄付にエントリーしてn日間保有した場合のトレード損益を算出する関数。ロスカット条件はATR*α(α:修正係数)以上の値幅逆行した場合。holding_dayは当日を含む。
-def calc_pl_with_open(df, index, holding_days, atr_duration=20, α=0.1):
+def calc_pl_with_open(df, index, holding_days, α=1, atr_duration=20):
     entry_price = df.loc[index, "始値"]
     exit_price = df.loc[index+holding_days-1,"終値"]
     close_yesterday = df.loc[index-1, "終値"]
