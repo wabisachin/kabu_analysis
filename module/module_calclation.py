@@ -49,6 +49,8 @@ total_P(利益の合計額), total_L(損失の合計額), max_P（最大利益pt
 import csv
 import pandas as pd
 import matplotlib.pyplot as plt
+import re
+import os
 
 #時系列データ(.csv)から[日付、始値、高値、安値、終値]を抽出し、Dataflame型に変換する関数
 # def get_data(fileName):
@@ -182,7 +184,7 @@ def calc_EV(trade_result, display=1):
     return results
 
 #選択した特徴量を指定領域(bin)毎に分割して、各ビン内におけるpl_atr(ev)をヒストグラムと共に２軸グラフ化。(ビニング分析)
-def plot_biaxial_graph_for_EV(df, variable, save=1):#widthは区間幅, rightは境界値。例えばx2の場合は各区間幅(width)は1,境界値は7が妥当。
+def plot_biaxial_graph_for_EV(df, variable, name_dir, save=1):#widthは区間幅, rightは境界値。例えばx2の場合は各区間幅(width)は1,境界値は7が妥当。
     
     ev_list = []
     count_list = []
@@ -242,10 +244,27 @@ def plot_biaxial_graph_for_EV(df, variable, save=1):#widthは区間幅, rightは
     ax1.legend(handler1+handler2, label1+label2, loc="upper right")
 
     #save=0なら画像保存せずにfigureに表示する
-    plt.savefig("Biaxial graph for {}.png".format(variable)) if save==1 else plt.show()
+    plt.savefig("analysis/{}/Biaxial graph for {}.png".format(name_dir,variable)) if save==1 else plt.show()
 
 
+def plot_all_biaxial_graph_for_EV(df, name_dir):
 
+    #dfのcolumnから特徴量だけ抽出してリスト化
+    variables = [col for col in df.columns if re.search(r'x\d', col)]
+
+    """x8がエラーを吐き出すので一時的に除外"""
+    variables.remove("x8")
+
+    """x8がエラーを吐き出すので一時的に除外"""
+
+    length = len(variables)
+    #描写領域の確保
+    fig = plt.figure()
+    ax_list = []
+
+    # 各特徴量ごとのEV-hist２軸グラフを画像ファイルの連続保存
+    for i, variable in enumerate(variables):
+        plot_biaxial_graph_for_EV(df, variable, name_dir)
 
 
 
