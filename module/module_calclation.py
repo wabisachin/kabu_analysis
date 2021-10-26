@@ -49,6 +49,7 @@ total_P(利益の合計額), total_L(損失の合計額), max_P（最大利益pt
 import csv
 import pandas as pd
 import matplotlib.pyplot as plt
+import seaborn as sns
 import re
 import os
 
@@ -266,252 +267,340 @@ def plot_all_biaxial_graph_for_EV(df, name_dir):
     for i, variable in enumerate(variables):
         plot_biaxial_graph_for_EV(df, variable, name_dir)
 
+#2変数のpivot_tableをポジション別で作成。(value:pl_atr)
+def make_pivot_table_for_pl(df, var1, var2, margins=True):
+
+    #戻り値
+    dict_heatmap = {}
+
+    #特徴量別のbin区間定義。関数pd.cut(df,labels, bins, right=True) はデフォルトでritht=Trueなので,右辺の末端を含むことを考慮してbinの範囲を指定した。
+    label_list ={
+        "x1": {"bin_labels":["0~1", "1~2","2~3","3~4","4~5","5~6","6~7", "7~"], "bins":[0,1,2,3,4,5,6,7,100]},
+        "x2": {"bin_labels":["~1", "1~2","2~3","3~4","4~5","5~6","6~7", "7~"], "bins":[0,1,2,3,4,5,6,7,100]},
+        "x3": {"bin_labels":["~5", "5~10","10~15","15~20"], "bins":[-1,5,10,15,20]},
+        "x4": {"bin_labels":["~10", "10~20","20~30","30~40", "40~50", "50~60"], "bins":[-1,10,20,30,40,50,60]},
+        "x5": {"bin_labels":["0", "1","2","3","4","5","5~10","10~20","20~"], "bins":[-1,0,1,2,3,4,5,10,20,100]},
+        "x6": {"bin_labels":["0", "1"], "bins":[-1,0,1]},
+        "x7": {"bin_labels":["0", "1"], "bins":[-1,0,1]},
+        "x8": {"bin_labels":["-10％以上", "-10％~-7.5％","-7.5％~-5.0％","-5.0％~-2.5％","-2.5％~0％", "0％~2.5％", "2.5％~5.0％","5.0％~7.5％","7.5％~10.0％","10.0％以上" ], "bins":[-1,-0.1, -0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75, 0.1, 1]},
+    }
+    for position in ["ls", "l", "s"]:
+        df_temp = df[df["position"] == position] if position in ["l", "s"] else df
+        #選択された2変数をビニングし,カテゴリー変数を付与
+        for var in [var1, var2]:
+            labels = label_list[var]["bin_labels"]
+            df_temp["{}_label".format(var)] = pd.cut(x=df_temp[var], bins=label_list[var]["bins"], labels=label_list[var]["bin_labels"])
+        #カテゴリー化された2変数に対して、ピボットテーブルを作成(value:pl_atr)
+        if margins:
+            df_heatmap = pd.pivot_table(df_temp, index="{}_label".format(var1), columns="{}_label".format(var2), values="pl_atr", margins=True)
+        else:
+            df_heatmap = pd.pivot_table(df_temp, index="{}_label".format(var1), columns="{}_label".format(var2), values="pl_atr")
+        dict_heatmap[position] = df_heatmap
+
+    return dict_heatmap
+
+#２変数のクロス集計をポジション別で作成(value:count)
+def make_pivot_table_for_N(df, var1, var2, margins=True):
+    #戻り値
+    dict_heatmap = {}
+
+    #特徴量別のbin区間定義。関数pd.cut(df,labels, bins, right=True) はデフォルトでritht=Trueなので,右辺の末端を含むことを考慮してbinの範囲を指定した。
+    label_list ={
+        "x1": {"bin_labels":["0~1", "1~2","2~3","3~4","4~5","5~6","6~7", "7~"], "bins":[0,1,2,3,4,5,6,7,100]},
+        "x2": {"bin_labels":["~1", "1~2","2~3","3~4","4~5","5~6","6~7", "7~"], "bins":[0,1,2,3,4,5,6,7,100]},
+        "x3": {"bin_labels":["~5", "5~10","10~15","15~20"], "bins":[-1,5,10,15,20]},
+        "x4": {"bin_labels":["~10", "10~20","20~30","30~40", "40~50", "50~60"], "bins":[-1,10,20,30,40,50,60]},
+        "x5": {"bin_labels":["0", "1","2","3","4","5","5~10","10~20","20~"], "bins":[-1,0,1,2,3,4,5,10,20,100]},
+        "x6": {"bin_labels":["0", "1"], "bins":[-1,0,1]},
+        "x7": {"bin_labels":["0", "1"], "bins":[-1,0,1]},
+        "x8": {"bin_labels":["-10％以上", "-10％~-7.5％","-7.5％~-5.0％","-5.0％~-2.5％","-2.5％~0％", "0％~2.5％", "2.5％~5.0％","5.0％~7.5％","7.5％~10.0％","10.0％以上" ], "bins":[-1,-0.1, -0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75, 0.1, 1]},
+    }
+
+    for position in ["ls", "l", "s"]:
+        df_temp = df[df["position"] == position] if position in ["l", "s"] else df
+        #選択された2変数をビニングし,カテゴリー変数を付与
+        for var in [var1, var2]:
+            labels = label_list[var]["bin_labels"]
+            df_temp["{}_label".format(var)] = pd.cut(x=df_temp[var], bins=label_list[var]["bins"], labels=label_list[var]["bin_labels"])
+        #カテゴリー化された2変数に対して、ピボットテーブルを作成(value:N)
+        if margins:
+            df_heatmap = pd.crosstab(df_temp["{}_label".format(var1)], df_temp["{}_label".format(var2)], margins=True)
+        else:
+            df_heatmap = pd.crosstab(df_temp["{}_label".format(var1)], df_temp["{}_label".format(var2)])
+        dict_heatmap[position] = df_heatmap
+
+    return dict_heatmap
+
+#2変数間のplヒートマップ図の可視化。
+def visualize_for_EV_by_heatmap(df, var1, var2):
+
+    dict_pivot_pl = make_pivot_table_for_pl(df, var1, var2, margins=False)
+    dict_pivot_N = make_pivot_table_for_N(df, var1, var2, margins=False)
+    #描写領域の確保
+    fig = plt.figure(figsize=(2,1))
+    positions = ["ls", "l", "s"]
+    #２種類のヒートマップ図をポジション別にそれぞれ可視化(pl_atr, N)
+    for i, position in enumerate(positions, 1):
+        ax1 = fig.add_subplot(len(positions),2,i*2-1)
+        ax1.set_title("Heatmap with {}&{} for pl_atr({})".format(var1, var2, position))
+        sns.heatmap(dict_pivot_pl[position], vmin=-1, vmax=1,center=0, cmap="coolwarm",annot=True, ax=ax1)
+        ax2 = fig.add_subplot(len(positions),2,i*2)
+        ax2.set_title("Heatmap with {}&{} for N({})".format(var1, var2, position))
+        sns.heatmap(dict_pivot_N[position], vmin=0, vmax=1000,cmap="YlGn", annot=True, ax=ax2)
+
+    plt.show()
 
 
 
-#------------------------------------<現在は使ってない関数>----------------------------------------------
+
+
+
+
+
+
+#------------------------------------<現在使ってない関数>----------------------------------------------
 
 #トレード結果の集計。３つの売買区分（合算、ロング、ショート）別に集計して、結果を返す。
-def summary_PL_old(trade_list, display=1):
+# def summary_PL_old(trade_list, display=1):
 
-    #目的の変数定義
-    result = {}
-    #構造を指定
-    result = {"ls":{}, "l":{}, "s":{}}
-    result["ls"] = {"N": 0, "N_P":0, "N_L":0, "total_P":0, "total_L":0, "max_P":0, "max_L":0, "max_NP":0, "max_NL":0}
-    result["l"] = {"N": 0, "N_P":0, "N_L":0, "total_P":0, "total_L":0, "max_P":0, "max_L":0, "max_NP":0, "max_NL":0}
-    result["s"] = {"N": 0, "N_P":0, "N_L":0, "total_P":0, "total_L":0, "max_P":0, "max_L":0, "max_NP":0, "max_NL":0}
+#     #目的の変数定義
+#     result = {}
+#     #構造を指定
+#     result = {"ls":{}, "l":{}, "s":{}}
+#     result["ls"] = {"N": 0, "N_P":0, "N_L":0, "total_P":0, "total_L":0, "max_P":0, "max_L":0, "max_NP":0, "max_NL":0}
+#     result["l"] = {"N": 0, "N_P":0, "N_L":0, "total_P":0, "total_L":0, "max_P":0, "max_L":0, "max_NP":0, "max_NL":0}
+#     result["s"] = {"N": 0, "N_P":0, "N_L":0, "total_P":0, "total_L":0, "max_P":0, "max_L":0, "max_NP":0, "max_NL":0}
     
-    #一時変数定義
-    counter_LS = 0#連勝数を格納
-    counter_L = 0
-    counter_S = 0
+#     #一時変数定義
+#     counter_LS = 0#連勝数を格納
+#     counter_L = 0
+#     counter_S = 0
 
-    #日付順にトレードリストをsort。この処理は後に最大連勝数、最大連敗数をカウントするために行う。
-    sorted_trade_list = sorted(trade_list, key=lambda x: x["date"])
+#     #日付順にトレードリストをsort。この処理は後に最大連勝数、最大連敗数をカウントするために行う。
+#     sorted_trade_list = sorted(trade_list, key=lambda x: x["date"])
 
-    for trade in sorted_trade_list:
+#     for trade in sorted_trade_list:
         
-        #トータルスコアを集計
-        result["ls"]["N"] += 1
-        if(trade["pl"] >= 0):
-            result["ls"]["N_P"] += 1 
-            result["ls"]["total_P"] += trade["pl"]
-            result["ls"]["max_P"] = max(result["ls"]["max_P"], trade["pl"])
-            #連勝数カウント
-            if counter_LS >= 0:
-                counter_LS +=1
-            else:
-                counter_LS = 1
-            result["ls"]["max_NP"] = max(counter_LS, result["ls"]["max_NP"])
+#         #トータルスコアを集計
+#         result["ls"]["N"] += 1
+#         if(trade["pl"] >= 0):
+#             result["ls"]["N_P"] += 1 
+#             result["ls"]["total_P"] += trade["pl"]
+#             result["ls"]["max_P"] = max(result["ls"]["max_P"], trade["pl"])
+#             #連勝数カウント
+#             if counter_LS >= 0:
+#                 counter_LS +=1
+#             else:
+#                 counter_LS = 1
+#             result["ls"]["max_NP"] = max(counter_LS, result["ls"]["max_NP"])
 
-        else:
-            result["ls"]["N_L"] += 1
-            result["ls"]["total_L"] += trade["pl"]
-            result["ls"]["max_L"] = min(result["ls"]["max_L"], trade["pl"])
-            #連敗数カウント
-            if counter_LS <= 0:
-                counter_LS -=1
-            else:
-                counter_LS = -1
-            result["ls"]["max_NL"] = min(counter_LS, result["ls"]["max_NL"]*(-1))*(-1)
+#         else:
+#             result["ls"]["N_L"] += 1
+#             result["ls"]["total_L"] += trade["pl"]
+#             result["ls"]["max_L"] = min(result["ls"]["max_L"], trade["pl"])
+#             #連敗数カウント
+#             if counter_LS <= 0:
+#                 counter_LS -=1
+#             else:
+#                 counter_LS = -1
+#             result["ls"]["max_NL"] = min(counter_LS, result["ls"]["max_NL"]*(-1))*(-1)
 
-        #ロングのスコアを集計
-        if(trade["position"] == "l"):
+#         #ロングのスコアを集計
+#         if(trade["position"] == "l"):
 
-            result["l"]["N"] += 1
-            if(trade["pl"] >= 0):
-                result["l"]["N_P"] += 1 
-                result["l"]["total_P"] += trade["pl"]
-                result["l"]["max_P"] = max(result["l"]["max_P"], trade["pl"])
-                #連勝数カウント
-                if counter_L >= 0:
-                    counter_L +=1
-                else:
-                    counter_L = 1
-                result["l"]["max_NP"] = max(counter_L, result["l"]["max_NP"])
+#             result["l"]["N"] += 1
+#             if(trade["pl"] >= 0):
+#                 result["l"]["N_P"] += 1 
+#                 result["l"]["total_P"] += trade["pl"]
+#                 result["l"]["max_P"] = max(result["l"]["max_P"], trade["pl"])
+#                 #連勝数カウント
+#                 if counter_L >= 0:
+#                     counter_L +=1
+#                 else:
+#                     counter_L = 1
+#                 result["l"]["max_NP"] = max(counter_L, result["l"]["max_NP"])
 
-            else:
-                result["l"]["N_L"] += 1
-                result["l"]["total_L"] += trade["pl"]
-                result["l"]["max_L"] = min(result["l"]["max_L"], trade["pl"])
-                #連敗数カウント
-                if counter_L <= 0:
-                    counter_L -=1
-                else:
-                    counter_L = -1
-                result["l"]["max_NL"] = min(counter_L, result["l"]["max_NL"]*(-1))*(-1)
+#             else:
+#                 result["l"]["N_L"] += 1
+#                 result["l"]["total_L"] += trade["pl"]
+#                 result["l"]["max_L"] = min(result["l"]["max_L"], trade["pl"])
+#                 #連敗数カウント
+#                 if counter_L <= 0:
+#                     counter_L -=1
+#                 else:
+#                     counter_L = -1
+#                 result["l"]["max_NL"] = min(counter_L, result["l"]["max_NL"]*(-1))*(-1)
         
-        #ショートのスコアを集計
-        elif(trade["position"] == "s"):
-            result["s"]["N"] += 1
-            if(trade["pl"] >= 0):
-                result["s"]["N_P"] += 1 
-                result["s"]["total_P"] += trade["pl"]
-                result["s"]["max_P"] = max(result["s"]["max_P"], trade["pl"])
-                #連勝数カウント
-                if counter_S >= 0:
-                    counter_S +=1
-                else:
-                    counter_S = 1
-                result["s"]["max_NP"] = max(counter_S, result["s"]["max_NP"])
+#         #ショートのスコアを集計
+#         elif(trade["position"] == "s"):
+#             result["s"]["N"] += 1
+#             if(trade["pl"] >= 0):
+#                 result["s"]["N_P"] += 1 
+#                 result["s"]["total_P"] += trade["pl"]
+#                 result["s"]["max_P"] = max(result["s"]["max_P"], trade["pl"])
+#                 #連勝数カウント
+#                 if counter_S >= 0:
+#                     counter_S +=1
+#                 else:
+#                     counter_S = 1
+#                 result["s"]["max_NP"] = max(counter_S, result["s"]["max_NP"])
 
-            else:
-                result["s"]["N_L"] += 1
-                result["s"]["total_L"] += trade["pl"]
-                result["s"]["max_L"] = min(result["s"]["max_L"], trade["pl"])
-                #連敗数カウント
-                if counter_S <= 0:
-                    counter_S -=1
-                else:
-                    counter_S = -1
-                result["s"]["max_NL"] = min(counter_S, result["s"]["max_NL"]*(-1))*(-1)
+#             else:
+#                 result["s"]["N_L"] += 1
+#                 result["s"]["total_L"] += trade["pl"]
+#                 result["s"]["max_L"] = min(result["s"]["max_L"], trade["pl"])
+#                 #連敗数カウント
+#                 if counter_S <= 0:
+#                     counter_S -=1
+#                 else:
+#                     counter_S = -1
+#                 result["s"]["max_NL"] = min(counter_S, result["s"]["max_NL"]*(-1))*(-1)
                 
-    keys = result.keys()
+#     keys = result.keys()
 
-    if(display == 1):#デフォルトでは結果をprintするように指定、表示が邪魔な場合は引数にdisplay=0を指定することで非表示にできる
-        for key in keys:
-            print("-----------------------------------------------")
-            print("<{}合算>".format(key.upper()))
-            print("総エントリー回数：{}".format(result[key]["N"]))
-            print("勝ちトレードの回数：{}".format(result[key]["N_P"]))
-            print("負けトレードの回数：{}".format(result[key]["N_L"]))
-            print("勝ちトレードの利益合計：{}".format(result[key]["total_P"]))
-            print("負けトレードの損失合計：{}".format(result[key]["total_L"]))
-            print("１トレードでの最大利益pt：{}".format(result[key]["max_P"]))
-            print("１トレードでの最大損失pt：{}".format(result[key]["max_L"]))
-            print("最大連勝数：{}".format(result[key]["max_NP"]))
-            print("最大連敗数：{}".format(result[key]["max_NL"]))
+#     if(display == 1):#デフォルトでは結果をprintするように指定、表示が邪魔な場合は引数にdisplay=0を指定することで非表示にできる
+#         for key in keys:
+#             print("-----------------------------------------------")
+#             print("<{}合算>".format(key.upper()))
+#             print("総エントリー回数：{}".format(result[key]["N"]))
+#             print("勝ちトレードの回数：{}".format(result[key]["N_P"]))
+#             print("負けトレードの回数：{}".format(result[key]["N_L"]))
+#             print("勝ちトレードの利益合計：{}".format(result[key]["total_P"]))
+#             print("負けトレードの損失合計：{}".format(result[key]["total_L"]))
+#             print("１トレードでの最大利益pt：{}".format(result[key]["max_P"]))
+#             print("１トレードでの最大損失pt：{}".format(result[key]["max_L"]))
+#             print("最大連勝数：{}".format(result[key]["max_NP"]))
+#             print("最大連敗数：{}".format(result[key]["max_NL"]))
 
-        # print("-----------------------------------------------")
-        # print("<LS合算>")
-        # print("総エントリー回数：{}".format(result["ls"]["N"]))
-        # print("勝ちトレードの回数：{}".format(result["ls"]["N_P"]))
-        # print("負けトレードの回数：{}".format(result["ls"]["N_L"]))
-        # print("勝ちトレードの利益合計：{}".format(result["ls"]["total_P"]))
-        # print("負けトレードの損失合計：{}".format(result["ls"]["total_L"]))
-        # print("１トレードでの最大利益pt：{}".format(result["ls"]["max_P"]))
-        # print("１トレードでの最大損失pt：{}".format(result["ls"]["max_L"]))
-        # print("最大連勝数：{}".format(result["ls"]["max_NP"]))
-        # print("最大連敗数：{}".format(result["ls"]["max_NL"]))
-        # print("-----------------------------------------------")
-        # print("<L>")
-        # print("総エントリー回数：{}".format(result["l"]["N"]))
-        # print("勝ちトレードの回数：{}".format(result["l"]["N_P"]))
-        # print("負けトレードの回数：{}".format(result["l"]["N_L"]))
-        # print("勝ちトレードの利益合計：{}".format(result["l"]["total_P"]))
-        # print("負けトレードの損失合計：{}".format(result["l"]["total_L"]))
-        # print("１トレードでの最大利益pt：{}".format(result["l"]["max_P"]))
-        # print("１トレードでの最大損失pt：{}".format(result["l"]["max_L"]))
-        # print("最大連勝数：{}".format(result["l"]["max_NP"]))
-        # print("最大連敗数：{}".format(result["l"]["max_NL"]))
-        # print("-----------------------------------------------")
-        # print("<S>")
-        # print("総エントリー回数：{}".format(result["s"]["N"]))
-        # print("勝ちトレードの回数：{}".format(result["s"]["N_P"]))
-        # print("負けトレードの回数：{}".format(result["s"]["N_L"]))
-        # print("勝ちトレードの利益合計：{}".format(result["s"]["total_P"]))
-        # print("負けトレードの損失合計：{}".format(result["s"]["total_L"]))
-        # print("１トレードでの最大利益pt：{}".format(result["s"]["max_P"]))
-        # print("１トレードでの最大損失pt：{}".format(result["s"]["max_L"]))
-        # print("最大連勝数：{}".format(result["s"]["max_NP"]))
-        # print("最大連敗数：{}".format(result["s"]["max_NL"]))
+#         # print("-----------------------------------------------")
+#         # print("<LS合算>")
+#         # print("総エントリー回数：{}".format(result["ls"]["N"]))
+#         # print("勝ちトレードの回数：{}".format(result["ls"]["N_P"]))
+#         # print("負けトレードの回数：{}".format(result["ls"]["N_L"]))
+#         # print("勝ちトレードの利益合計：{}".format(result["ls"]["total_P"]))
+#         # print("負けトレードの損失合計：{}".format(result["ls"]["total_L"]))
+#         # print("１トレードでの最大利益pt：{}".format(result["ls"]["max_P"]))
+#         # print("１トレードでの最大損失pt：{}".format(result["ls"]["max_L"]))
+#         # print("最大連勝数：{}".format(result["ls"]["max_NP"]))
+#         # print("最大連敗数：{}".format(result["ls"]["max_NL"]))
+#         # print("-----------------------------------------------")
+#         # print("<L>")
+#         # print("総エントリー回数：{}".format(result["l"]["N"]))
+#         # print("勝ちトレードの回数：{}".format(result["l"]["N_P"]))
+#         # print("負けトレードの回数：{}".format(result["l"]["N_L"]))
+#         # print("勝ちトレードの利益合計：{}".format(result["l"]["total_P"]))
+#         # print("負けトレードの損失合計：{}".format(result["l"]["total_L"]))
+#         # print("１トレードでの最大利益pt：{}".format(result["l"]["max_P"]))
+#         # print("１トレードでの最大損失pt：{}".format(result["l"]["max_L"]))
+#         # print("最大連勝数：{}".format(result["l"]["max_NP"]))
+#         # print("最大連敗数：{}".format(result["l"]["max_NL"]))
+#         # print("-----------------------------------------------")
+#         # print("<S>")
+#         # print("総エントリー回数：{}".format(result["s"]["N"]))
+#         # print("勝ちトレードの回数：{}".format(result["s"]["N_P"]))
+#         # print("負けトレードの回数：{}".format(result["s"]["N_L"]))
+#         # print("勝ちトレードの利益合計：{}".format(result["s"]["total_P"]))
+#         # print("負けトレードの損失合計：{}".format(result["s"]["total_L"]))
+#         # print("１トレードでの最大利益pt：{}".format(result["s"]["max_P"]))
+#         # print("１トレードでの最大損失pt：{}".format(result["s"]["max_L"]))
+#         # print("最大連勝数：{}".format(result["s"]["max_NP"]))
+#         # print("最大連敗数：{}".format(result["s"]["max_NL"]))
 
-    return result
+#     return result
 
-#期待値を算出する関数
-def calc_EV_old(trade_list):
+# #期待値を算出する関数
+# def calc_EV_old(trade_list):
     
-    #変数、データ構造定義
-    result = {"ls":{}, "l":{}, "s":{}}
-    result["ls"]={"PL":0, "PO":0, "win_rate":0, "EV":0, "P_AVE":0, "L_AVE":0}
-    result["l"]={"PL":0, "PO":0, "win_rate":0, "EV":0, "P_AVE":0, "L_AVE":0}
-    result["s"]={"PL":0, "PO":0, "win_rate":0, "EV":0, "P_AVE":0, "L_AVE":0}
+#     #変数、データ構造定義
+#     result = {"ls":{}, "l":{}, "s":{}}
+#     result["ls"]={"PL":0, "PO":0, "win_rate":0, "EV":0, "P_AVE":0, "L_AVE":0}
+#     result["l"]={"PL":0, "PO":0, "win_rate":0, "EV":0, "P_AVE":0, "L_AVE":0}
+#     result["s"]={"PL":0, "PO":0, "win_rate":0, "EV":0, "P_AVE":0, "L_AVE":0}
 
-    data = summary_PL_old(trade_list, display=0)
+#     data = summary_PL_old(trade_list, display=0)
 
-    keys = result.keys()
+#     keys = result.keys()
     
-    for key in keys:
+#     for key in keys:
 
-        result[key]["PL"] = data[key]["total_P"] + data[key]["total_L"]
-        result[key]["PO"] = data[key]["total_P"]/data[key]["total_L"]*(-1) if data[key]["total_L"]!=0 else " - "
-        result[key]["win_rate"] = float(data[key]["N_P"])/data[key]["N"] if data[key]["N"]!=0 else " - "
-        result[key]["EV"] = (data[key]["total_P"] + data[key]["total_L"])/data[key]["N"]  if data[key]["N"]!=0 else " - "
-        result[key]["P_AVE"] = data[key]["total_P"]/data[key]["N_P"]  if data[key]["N_P"]!=0 else " - "
-        result[key]["L_AVE"] = data[key]["total_L"]/data[key]["N_L"]  if data[key]["N_L"]!=0 else " - "
+#         result[key]["PL"] = data[key]["total_P"] + data[key]["total_L"]
+#         result[key]["PO"] = data[key]["total_P"]/data[key]["total_L"]*(-1) if data[key]["total_L"]!=0 else " - "
+#         result[key]["win_rate"] = float(data[key]["N_P"])/data[key]["N"] if data[key]["N"]!=0 else " - "
+#         result[key]["EV"] = (data[key]["total_P"] + data[key]["total_L"])/data[key]["N"]  if data[key]["N"]!=0 else " - "
+#         result[key]["P_AVE"] = data[key]["total_P"]/data[key]["N_P"]  if data[key]["N_P"]!=0 else " - "
+#         result[key]["L_AVE"] = data[key]["total_L"]/data[key]["N_L"]  if data[key]["N_L"]!=0 else " - "
 
-        print("---------------------")
-        print("<{}合算の期待値>".format(key.upper()))
-        print("総利益(pt): {}".format(result[key]["PL"]))
-        print("総エントリー回数:{}".format(data[key]["N"]))
-        print("ペイオフ値: {}".format(result[key]["PO"]))
-        print("勝率: {}％".format(result[key]["win_rate"]*100))
-        print("1トレードの期待値(EV): {}".format(result[key]["EV"]))
-        print("1トレードの平均利益(pt): {}".format(result[key]["P_AVE"]))
-        print("1トレードの平均損失(pt): {}".format(result[key]["L_AVE"]))
-        print("1トレードの最大利益(pt):{}".format(data[key]["max_P"]))
-        print("1トレードの最大損失(pt):{}".format(data[key]["max_L"]))
+#         print("---------------------")
+#         print("<{}合算の期待値>".format(key.upper()))
+#         print("総利益(pt): {}".format(result[key]["PL"]))
+#         print("総エントリー回数:{}".format(data[key]["N"]))
+#         print("ペイオフ値: {}".format(result[key]["PO"]))
+#         print("勝率: {}％".format(result[key]["win_rate"]*100))
+#         print("1トレードの期待値(EV): {}".format(result[key]["EV"]))
+#         print("1トレードの平均利益(pt): {}".format(result[key]["P_AVE"]))
+#         print("1トレードの平均損失(pt): {}".format(result[key]["L_AVE"]))
+#         print("1トレードの最大利益(pt):{}".format(data[key]["max_P"]))
+#         print("1トレードの最大損失(pt):{}".format(data[key]["max_L"]))
     
-    # #合算
-    # result["ls"]["PL"] = data["ls"]["total_P"] + data["ls"]["total_L"]
-    # result["ls"]["PO"] = data["ls"]["total_P"]/data["ls"]["total_L"]
-    # result["ls"]["win_rate"] = float(data["ls"]["N_P"])/data["ls"]["N"]
-    # result["ls"]["EV"] = (data["ls"]["total_P"] + data["ls"]["total_L"])/data["ls"]["N"]
-    # result["ls"]["P_AVE"] = data["ls"]["total_P"]/data["ls"]["N_P"]
-    # result["ls"]["L_AVE"] = data["ls"]["total_L"]/data["ls"]["N_L"]
-    # #ロング
-    # result["l"]["PL"] = data["l"]["total_P"] + data["l"]["total_L"]
-    # result["l"]["PO"] = data["l"]["total_P"]/data["l"]["total_L"]
-    # result["l"]["win_rate"] = float(data["l"]["N_P"])/data["l"]["N"]
-    # result["l"]["EV"] = (data["l"]["total_P"] + data["l"]["total_L"])/data["l"]["N"]
-    # result["l"]["P_AVE"] = data["l"]["total_P"]/data["l"]["N_P"]
-    # result["l"]["L_AVE"] = data["l"]["total_L"]/data["l"]["N_L"]
-    # #ショート
-    # result["s"]["PL"] = data["s"]["total_P"] + data["s"]["total_L"]
-    # result["s"]["PO"] = data["s"]["total_P"]/data["s"]["total_L"]
-    # result["s"]["win_rate"] = float(data["s"]["N_P"])/data["s"]["N"]
-    # result["s"]["EV"] = (data["s"]["total_P"] + data["s"]["total_L"])/data["s"]["N"]
-    # result["s"]["P_AVE"] = data["s"]["total_P"]/data["s"]["N_P"]
-    # result["s"]["L_AVE"] = data["s"]["total_L"]/data["s"]["N_L"]
+#     # #合算
+#     # result["ls"]["PL"] = data["ls"]["total_P"] + data["ls"]["total_L"]
+#     # result["ls"]["PO"] = data["ls"]["total_P"]/data["ls"]["total_L"]
+#     # result["ls"]["win_rate"] = float(data["ls"]["N_P"])/data["ls"]["N"]
+#     # result["ls"]["EV"] = (data["ls"]["total_P"] + data["ls"]["total_L"])/data["ls"]["N"]
+#     # result["ls"]["P_AVE"] = data["ls"]["total_P"]/data["ls"]["N_P"]
+#     # result["ls"]["L_AVE"] = data["ls"]["total_L"]/data["ls"]["N_L"]
+#     # #ロング
+#     # result["l"]["PL"] = data["l"]["total_P"] + data["l"]["total_L"]
+#     # result["l"]["PO"] = data["l"]["total_P"]/data["l"]["total_L"]
+#     # result["l"]["win_rate"] = float(data["l"]["N_P"])/data["l"]["N"]
+#     # result["l"]["EV"] = (data["l"]["total_P"] + data["l"]["total_L"])/data["l"]["N"]
+#     # result["l"]["P_AVE"] = data["l"]["total_P"]/data["l"]["N_P"]
+#     # result["l"]["L_AVE"] = data["l"]["total_L"]/data["l"]["N_L"]
+#     # #ショート
+#     # result["s"]["PL"] = data["s"]["total_P"] + data["s"]["total_L"]
+#     # result["s"]["PO"] = data["s"]["total_P"]/data["s"]["total_L"]
+#     # result["s"]["win_rate"] = float(data["s"]["N_P"])/data["s"]["N"]
+#     # result["s"]["EV"] = (data["s"]["total_P"] + data["s"]["total_L"])/data["s"]["N"]
+#     # result["s"]["P_AVE"] = data["s"]["total_P"]/data["s"]["N_P"]
+#     # result["s"]["L_AVE"] = data["s"]["total_L"]/data["s"]["N_L"]
 
-    # print("---------------------")
-    # print("<LS合算の期待値>")
-    # print("総利益(pt): {}".format(result["ls"]["PL"]))
-    # print("総エントリー回数:{}".format(data["ls"]["N"]))
-    # print("ペイオフ値: {}".format(result["ls"]["PO"]))
-    # print("勝率: {}％".format(result["ls"]["win_rate"]*100))
-    # print("1トレードの期待値(EV): {}".format(result["ls"]["EV"]))
-    # print("1トレードの平均利益(pt): {}".format(result["ls"]["P_AVE"]))
-    # print("1トレードの平均損失(pt): {}".format(result["ls"]["L_AVE"]))
-    # print("1トレードの最大利益(pt):{}".format(data["ls"]["max_P"]))
-    # print("1トレードの最大損失(pt):{}".format(data["ls"]["max_L"]))
+#     # print("---------------------")
+#     # print("<LS合算の期待値>")
+#     # print("総利益(pt): {}".format(result["ls"]["PL"]))
+#     # print("総エントリー回数:{}".format(data["ls"]["N"]))
+#     # print("ペイオフ値: {}".format(result["ls"]["PO"]))
+#     # print("勝率: {}％".format(result["ls"]["win_rate"]*100))
+#     # print("1トレードの期待値(EV): {}".format(result["ls"]["EV"]))
+#     # print("1トレードの平均利益(pt): {}".format(result["ls"]["P_AVE"]))
+#     # print("1トレードの平均損失(pt): {}".format(result["ls"]["L_AVE"]))
+#     # print("1トレードの最大利益(pt):{}".format(data["ls"]["max_P"]))
+#     # print("1トレードの最大損失(pt):{}".format(data["ls"]["max_L"]))
     
 
 
-    # print("---------------------")
-    # print("<Lの期待値>")
-    # print("総利益(pt): {}".format(result["l"]["PL"]))
-    # print("総エントリー回数:{}".format(data["l"]["N"]))
-    # print("ペイオフ値: {}".format(result["l"]["PO"]))
-    # print("勝率: {}％".format(result["l"]["win_rate"]*100))
-    # print("1トレードの期待値(EV): {}".format(result["l"]["EV"]))
-    # print("1トレードの平均利益(pt): {}".format(result["l"]["P_AVE"]))
-    # print("1トレードの平均損失(pt): {}".format(result["l"]["L_AVE"]))
-    # print("1トレードの最大利益(pt):{}".format(data["l"]["max_P"]))
-    # print("1トレードの最大損失(pt):{}".format(data["l"]["max_L"]))
+#     # print("---------------------")
+#     # print("<Lの期待値>")
+#     # print("総利益(pt): {}".format(result["l"]["PL"]))
+#     # print("総エントリー回数:{}".format(data["l"]["N"]))
+#     # print("ペイオフ値: {}".format(result["l"]["PO"]))
+#     # print("勝率: {}％".format(result["l"]["win_rate"]*100))
+#     # print("1トレードの期待値(EV): {}".format(result["l"]["EV"]))
+#     # print("1トレードの平均利益(pt): {}".format(result["l"]["P_AVE"]))
+#     # print("1トレードの平均損失(pt): {}".format(result["l"]["L_AVE"]))
+#     # print("1トレードの最大利益(pt):{}".format(data["l"]["max_P"]))
+#     # print("1トレードの最大損失(pt):{}".format(data["l"]["max_L"]))
 
-    # print("---------------------")
-    # print("<Sの期待値>")
-    # print("総利益(pt): {}".format(result["s"]["PL"]))
-    # print("総エントリー回数:{}".format(data["s"]["N"]))
-    # print("ペイオフ値: {}".format(result["s"]["PO"]))
-    # print("勝率: {}％".format(result["s"]["win_rate"]*100))
-    # print("1トレードの期待値(EV): {}".format(result["s"]["EV"]))
-    # print("1トレードの平均利益(pt): {}".format(result["s"]["P_AVE"]))
-    # print("1トレードの平均損失(pt): {}".format(result["s"]["L_AVE"]))
-    # print("1トレードの最大利益(pt):{}".format(data["s"]["max_P"]))
-    # print("1トレードの最大損失(pt):{}".format(data["s"]["max_L"]))
+#     # print("---------------------")
+#     # print("<Sの期待値>")
+#     # print("総利益(pt): {}".format(result["s"]["PL"]))
+#     # print("総エントリー回数:{}".format(data["s"]["N"]))
+#     # print("ペイオフ値: {}".format(result["s"]["PO"]))
+#     # print("勝率: {}％".format(result["s"]["win_rate"]*100))
+#     # print("1トレードの期待値(EV): {}".format(result["s"]["EV"]))
+#     # print("1トレードの平均利益(pt): {}".format(result["s"]["P_AVE"]))
+#     # print("1トレードの平均損失(pt): {}".format(result["s"]["L_AVE"]))
+#     # print("1トレードの最大利益(pt):{}".format(data["s"]["max_P"]))
+#     # print("1トレードの最大損失(pt):{}".format(data["s"]["max_L"]))
 
 
-    return result
+#     return result
