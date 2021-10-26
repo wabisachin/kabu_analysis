@@ -332,23 +332,25 @@ def make_pivot_table_for_N(df, var1, var2, margins=True):
     return dict_heatmap
 
 #2変数間のplヒートマップ図の可視化。
-def visualize_for_EV_by_heatmap(df, var1, var2):
+def visualize_for_EV_by_heatmap(df, var1, var2, name_dir="", save=False):
 
     dict_pivot_pl = make_pivot_table_for_pl(df, var1, var2, margins=False)
     dict_pivot_N = make_pivot_table_for_N(df, var1, var2, margins=False)
     #描写領域の確保
-    fig = plt.figure(figsize=(2,1))
+    fig = plt.figure(figsize=(12,8))
+    plt.subplots_adjust(wspace=0.3, hspace=0.6)
     positions = ["ls", "l", "s"]
     #２種類のヒートマップ図をポジション別にそれぞれ可視化(pl_atr, N)
     for i, position in enumerate(positions, 1):
         ax1 = fig.add_subplot(len(positions),2,i*2-1)
-        ax1.set_title("Heatmap with {}&{} for pl_atr({})".format(var1, var2, position))
-        sns.heatmap(dict_pivot_pl[position], vmin=-1, vmax=1,center=0, cmap="coolwarm",annot=True, ax=ax1)
+        ax1.set_title("<{}: pl_atr with {}&{}>".format(position,var1, var2))
+        sns.heatmap(dict_pivot_pl[position], ax=ax1,vmin=-1, vmax=1,center=0, cmap="coolwarm",annot=True, fmt=".2f")
         ax2 = fig.add_subplot(len(positions),2,i*2)
-        ax2.set_title("Heatmap with {}&{} for N({})".format(var1, var2, position))
-        sns.heatmap(dict_pivot_N[position], vmin=0, vmax=1000,cmap="YlGn", annot=True, ax=ax2)
+        ax2.set_title("<{}: N with {}&{}>".format(position, var1, var2))
+        sns.heatmap(dict_pivot_N[position], ax=ax2, vmin=0, vmax=1000,cmap="YlGn", annot=True, fmt="d")
 
-    plt.show()
+    #save=0なら画像保存せずにfigureに表示する
+    plt.savefig("analysis/{}/Heatmap with {}&{} for pl.png".format(name_dir,var1, var2)) if save else plt.show()
 
 
 
