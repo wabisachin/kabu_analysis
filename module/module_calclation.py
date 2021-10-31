@@ -340,7 +340,7 @@ def visualize_for_EV_by_heatmap(df, var1, var2, name_dir="", save=False):
     fig = plt.figure(figsize=(12,8))
     plt.subplots_adjust(wspace=0.3, hspace=0.6)
     positions = ["ls", "l", "s"]
-    #２種類のヒートマップ図をポジション別にそれぞれ可視化(pl_atr, N)
+    #２種類のヒートマップ図をポジション別(ls, l, s)にそれぞれ可視化(pl_atr, N)
     for i, position in enumerate(positions, 1):
         ax1 = fig.add_subplot(len(positions),2,i*2-1)
         ax1.set_title("<{}: pl_atr with {}&{}>".format(position,var1, var2))

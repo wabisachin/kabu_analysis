@@ -38,24 +38,26 @@ if not os.path.exists("analysis/{}".format(name_selected)):
     os.mkdir("analysis/{}".format(name_selected))
 
 #２軸グラフを画像ファイルとして保存
-# mc.plot_all_biaxial_graph_for_EV(df, name_selected, save=1)
+mc.plot_all_biaxial_graph_for_EV(df, name_selected)
 
-dict_heat_pl = mc.make_pivot_table_for_pl(df,"x2", "x1")
-dict_heat_N = mc.make_pivot_table_for_N(df, "x2", "x1")
-for position in ["ls", "l", "s"]:
-    print("----{}----".format(position))
-    print("<<<pivot_table>>>")
-    print(dict_heat_pl[position])
-    print("<<<count>>>")
-    print(dict_heat_N[position])
+#heatmapの作成
+# dict_heat_pl = mc.make_pivot_table_for_pl(df,"x2", "x1")
+# dict_heat_N = mc.make_pivot_table_for_N(df, "x2", "x1")
+# for position in ["ls", "l", "s"]:
+#     print("----{}----".format(position))
+#     print("<<<pivot_table>>>")
+#     print(dict_heat_pl[position])
+#     print("<<<count>>>")
+#     print(dict_heat_N[position])
 
-mc.visualize_for_EV_by_heatmap(df, "x2", "x1", name_selected, save=True)
-# print("-------crosstab--------")
-# print(visualize_for_N_by_heatmap(df, "x2", "x1"))
-
-
-
-
+mc.visualize_for_EV_by_heatmap(df, "x1", "x2", name_selected, save=True)
+mc.visualize_for_EV_by_heatmap(df, "x3", "x2", name_selected, save=True)
+mc.visualize_for_EV_by_heatmap(df, "x4", "x2", name_selected, save=True)
+mc.visualize_for_EV_by_heatmap(df, "x5", "x2", name_selected, save=True)
+mc.visualize_for_EV_by_heatmap(df, "x6", "x2", name_selected, save=True)
+mc.visualize_for_EV_by_heatmap(df, "x7", "x2", name_selected, save=True)
+mc.visualize_for_EV_by_heatmap(df, "x3", "x1", name_selected, save=True)
+mc.visualize_for_EV_by_heatmap(df, "x4", "x1", name_selected, save=True)
 
 #2変数間のplヒートマップ図の作成。
 # def visualize_for_EV_by_heatmap(df, var1, var2):
@@ -130,6 +132,10 @@ mc.visualize_for_EV_by_heatmap(df, "x2", "x1", name_selected, save=True)
 #     # return df_heatmap
 
 
+# print("-----x2<1, 1<x1<3,かつsの結果-----")
+# print(df.loc[(df["x2"]<1) &(df["x1"]<3) & (df["x1"]>1) & (df["position"]=="s")])
+# print("-----x2<1, 1<x1<3,かつsの結果-----")
+# print(df.loc[(df["x2"]<1) &(df["x1"]<3) & (df["x1"]>1) & (df["position"]=="s")].describe())
 
 
 # print("-------x2>2の結果----------")
@@ -138,8 +144,6 @@ mc.visualize_for_EV_by_heatmap(df, "x2", "x1", name_selected, save=True)
 # print(df.loc[(df["x2"]>2) & (df["x6"]==1)].describe())
 # print("-----x2>2, かつx7=1の結果-------")
 # print(df.loc[(df["x2"]>2) & (df["x7"]==1)].describe())
-# print("-----x2>2, 0<x1<3,かつlの結果-----")
-# print(df.loc[(df["x2"]>2) &(df["x1"]<3) & (df["x1"]>0) & (df["position"]=="l")])
 # print("-----x2>2, 0<x1<1,かつlの結果-----")
 # print(df.loc[(df["x2"]>2) &(df["x1"]<1) & (df["x1"]>0) & (df["position"]=="l")].describe())
 # print("-----x2>2, 1<x1<2,かつlの結果-----")

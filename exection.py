@@ -35,8 +35,13 @@ print("パラメータ１：保有日数を入力してください")
 holding_days = int(input())
 
 #損切り逆指値乗数αの値を入力
-print("逆指値乗数αの値を入力してください(0.5<α<2.0)")
+print("逆指値乗数αの値を入力してください(0.5<α<2.0が現実的なライン)")
 α = float(input())
+
+#場中イン手法の場合、パラメータの追加
+if(selected_method == "after_open_follow_close"):
+    print("エントリー指値を置く位置を入力してください(ATR比)")
+    atr_ratio = float(input())
 
 #変数定義
 results = pd.DataFrame() #全銘柄のトレード結果を格納
@@ -48,8 +53,15 @@ for data_name in selected_dataset:
     # print(data)
     code = data_name.replace(datasets[selected_label] + "/", "").replace(".csv", "")#ファイル名の拡張子（.csv）を取り除いた銘柄コード
     print(code)
+
     #手法検証開始
-    summary = eval("st.{}(data, code, holding_days, α, *params)".format(selected_method))
+    #手法別にパラメータが異なるので場合分け（汚いけど)
+    if(selected_method == "after_open_follow_close"):
+        summary = eval("st.{}(data, code, holding_days, α, atr_ratio, *params)".format(selected_method))
+    else:
+        summary = eval("st.{}(data, code, holding_days, α, *params)".format(selected_method))
+
+
 
     result = summary["result"]
     params = summary["params"] if params == [] else params#ループ中、何度も同じパラメータを入力させられる手間を省くための処理
@@ -67,7 +79,10 @@ print("結果をcsv出力するか選んでください(y/n)")
 flag = input()
 
 if(flag=="y"):
-    results.to_csv("result/{}__{}__{}days__{}.csv".format(datasets_name[selected_label], selected_method, holding_days, α), index=False)
+    if(selected_method == "after_open_follow_close"):
+        results.to_csv("result/{}__{}__{}days__{}__rate{}.csv".format(datasets_name[selected_label], selected_method, holding_days, α, atr_ratio), index=False)
+    else:
+        results.to_csv("result/{}__{}__{}days__{}.csv".format(datasets_name[selected_label], selected_method, holding_days, α), index=False)
 
 # print(results)
 print("------------結果---------------")

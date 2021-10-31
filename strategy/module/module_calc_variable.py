@@ -39,7 +39,7 @@ def calc_ATR(df, index, duration=20):
 
 def calc_volume_avg(df, index, duration=20):
     temp_df = df.loc[index-duration:index-1]
-    print(temp_df.describe())
+    # print(temp_df.describe())
     volume_ave = temp_df.describe().loc["mean", "出来高"]
 
     return volume_ave
@@ -193,9 +193,9 @@ def calc_x8(df, df_NI225, index):
     # print("----始値:{}".format(today_NI225["始値"].replace(",", "")))
     today_NI225_open = float(today_NI225["始値"].iloc[-1].replace(",", ""))
     yesterday_NI225_close = float(yesterday_NI225["終値"].iloc[-1].replace(",", ""))
-    print("----終値:{}".format(yesterday_NI225_close))
+    # print("----終値:{}".format(yesterday_NI225_close))
     ratio = (today_NI225_open - yesterday_NI225_close)/yesterday_NI225_close
-    print("----ratio:{}".format(ratio))
+    # print("----ratio:{}".format(ratio))
 
     return ratio
 
