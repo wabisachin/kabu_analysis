@@ -349,7 +349,7 @@ def visualize_for_EV_by_heatmap(df, var1, var2, name_dir="", save=False):
         ax2.set_title("<{}: N with {}&{}>".format(position, var1, var2))
         sns.heatmap(dict_pivot_N[position], ax=ax2, vmin=0, vmax=1000,cmap="YlGn", annot=True, fmt="d")
 
-    #save=0なら画像保存せずにfigureに表示する
+    #save=Falseなら画像保存せずにfigureに表示する
     plt.savefig("analysis/{}/Heatmap with {}&{} for pl.png".format(name_dir,var1, var2)) if save else plt.show()
 
 

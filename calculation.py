@@ -59,6 +59,8 @@ mc.visualize_for_EV_by_heatmap(df, "x7", "x2", name_selected, save=True)
 mc.visualize_for_EV_by_heatmap(df, "x3", "x1", name_selected, save=True)
 mc.visualize_for_EV_by_heatmap(df, "x4", "x1", name_selected, save=True)
 
+print("x2>5条件下のヒートマップ検証")
+mc.visualize_for_EV_by_heatmap(df[df["x2"]>5], "x7", "x1", name_selected)
 #2変数間のplヒートマップ図の作成。
 # def visualize_for_EV_by_heatmap(df, var1, var2):
 
@@ -148,8 +150,13 @@ mc.visualize_for_EV_by_heatmap(df, "x4", "x1", name_selected, save=True)
 # print(df.loc[(df["x2"]>2) &(df["x1"]<1) & (df["x1"]>0) & (df["position"]=="l")].describe())
 # print("-----x2>2, 1<x1<2,かつlの結果-----")
 # print(df.loc[(df["x2"]>2) &(df["x1"]<2) & (df["x1"]>1) & (df["position"]=="l")].describe())
-# print("-----x2>2, 2<x1<3,かつlの結果-----")
-# print(df.loc[(df["x2"]>2) &(df["x1"]<3) & (df["x1"]>2) & (df["position"]=="l")].describe())
+print("-----x2>2, 2<x1<3,かつlの結果-----")
+print(df.loc[(df["x2"]>2) &(df["x1"]<4) & (df["x1"]>3) & (df["position"]=="l") &(df["x7"]==1)])
+print(df.loc[(df["x2"]>2) &(df["x1"]<4) & (df["x1"]>3) & (df["position"]=="l") &(df["x7"]==1)].describe())
+print("-----x1>5, かつlの結果-----")
+print(df.loc[(df["position"]=="s") &(df["x2"]>7)])
+print(df.loc[(df["position"]=="s") &(df["x2"]>7)].describe())
+
 # print("-----x2>2, 3<x1<4,かつlの結果-----")
 # print(df.loc[(df["x2"]>2) &(df["x1"]<4) & (df["x1"]>3) & (df["position"]=="l")].describe())
 # print("-----x2>2, 4<x1<5,かつlの結果-----")
