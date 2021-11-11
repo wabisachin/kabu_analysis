@@ -49,6 +49,7 @@ params = [] #設定パラメータを保持
 
 for data_name in selected_dataset:
     
+    print(data_name)
     data = mc.get_data("{}".format(data_name))
     # print(data)
     code = data_name.replace(datasets[selected_label] + "/", "").replace(".csv", "")#ファイル名の拡張子（.csv）を取り除いた銘柄コード

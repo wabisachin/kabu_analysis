@@ -59,8 +59,9 @@ if not os.path.exists("analysis/{}".format(name_selected)):
 # mc.visualize_for_EV_by_heatmap(df, "x3", "x1", name_selected, save=True)
 # mc.visualize_for_EV_by_heatmap(df, "x4", "x1", name_selected, save=True)
 
-print("x2>4条件下のヒートマップ検証")
-mc.visualize_for_EV_by_heatmap(df[df["x2"]>4], "x4", "x1", name_selected)
+print("x2>2条件下のヒートマップ検証")
+mc.visualize_for_EV_by_heatmap(df[(df["x2"]>2)&(df["x7"]==1)], "x4", "x1", name_selected)
+# mc.visualize_for_EV_by_heatmap(df[(df["x2"]>2)&(df["x7"]==1)], "x4", "x1", name_selected)
 # mc.visualize_for_EV_by_heatmap(df[(df["x2"]>2)&(df["x2"]<4)], "x7", "x1", name_selected)
 # mc.visualize_for_EV_by_heatmap(df[(df["x2"]>4)&(df["x2"]<7)], "x7", "x1", name_selected)
 #2変数間のplヒートマップ図の作成。

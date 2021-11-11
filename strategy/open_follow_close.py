@@ -140,7 +140,7 @@ import strategy.module.module_calc_variable as mcv
 #pandasのオプション設定
 pd.set_option("display.max_rows", None)
 #検証に必要なファイルの事前読み込み
-df_NI225 = pd.read_csv("./dataset/NI225/nikkei225_20010903_20210930.csv")
+df_NI225 = pd.read_csv("./dataset/NI225/nikkei225_20010903_20211110.csv")
 
 # 今回はpandasのDataframe型を利用する
 def open_follow_close(dataset, code, holding_days, α, params_x1=20, params_x2=20, params_x3=20, params_x4=60):#入力パラメータは基本的には保有日数のみでいい。
