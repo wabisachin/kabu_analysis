@@ -96,6 +96,70 @@ def calc_pl_with_open(df, index, holding_days, α=1, atr_duration=20):
 
     return pl
 
+#Dataframe型のi番目の日の寄付にエントリーしてn日間保有した場合のトレード損益を算出する関数。ロスカット条件は前日の高値(安値)を下回った時
+def calc_pl_with_open_losscut_by_yesterday_highlow(df, index, holding_days, atr_duration=20):
+    entry_price = df.loc[index, "始値"]
+    exit_price = df.loc[index+holding_days-1,"終値"]
+    close_yesterday = df.loc[index-1, "終値"]
+    high_yesterday = df.loc[index-1, "高値"]
+    low_yesterday = df.loc[index-1, "安値"]
+    atr = calc_ATR(df, index, atr_duration)
+    
+    # print("ポジション:{}".format(position))
+    # print("エントリー価格：{}".format(entry_price))
+    # print("ロスカット幅(ATR)：{}".format(losscut_range))
+    #ロングの場合
+    if(entry_price > close_yesterday):
+        #損切り幅の算出
+        losscut_range = entry_price - low_yesterday
+        #逆指値にタッチしたら値の書き換え
+        for i, data in df.loc[index:index+holding_days-1].iterrows():
+            # print(data)
+            if(data["始値"] <= low_yesterday):
+                # print("寄付きにロスカットされました！！！")
+                exit_price = data["始値"]
+                break
+            elif(data["安値"] <= low_yesterday):
+                # print("場中にロスカットされました")
+                exit_price = low_yesterday
+                break
+        # print("決済価格：{}".format(exit_price))
+        pl = (exit_price - entry_price)
+    #ショートの場合
+    elif(entry_price < close_yesterday):
+        #損切り幅の算出
+        losscut_range = high_yesterday - entry_price
+        #逆指値にタッチしたら値の書き換え
+        for i, data in df.loc[index:index+holding_days-1].iterrows():
+            # print(data)
+            if(data["始値"] >= high_yesterday):
+                # print("寄付きにロスカットされました！！！")
+                # print(data["日付"])
+                exit_price = data["始値"]
+                break
+            elif(data["高値"] >= high_yesterday):
+                # print("場中にロスカットされました")
+                # print(data["日付"])
+                exit_price = high_yesterday
+                break
+        # print("決済価格：{}".format(exit_price))
+        pl = entry_price - exit_price
+    # print("----------------------------")
+    # print(df.loc[index, "日付"])
+    # print("pl(修正前):{}円".format(pl))
+    # print("losscut_range: {}".format(losscut_range))
+    pl = pl/losscut_range
+    # print("pl(修正後):{}pt".format(pl))
+
+    pl_atr = pl*(losscut_range/atr)
+
+    #それ以外の場合はエラーを返す
+    # else:
+    #     print("無効な値がはいっています。l or s")
+    #     raise ValueError
+
+    return {"pl_lc": pl, "pl_atr": pl_atr}
+
 #Dataframe型のi番目の日に指値エントリー(limit_price)してn日間保有した場合のトレード損益を算出する関数。ロスカット条件はATR*α(α:修正係数)以上の値幅逆行した場合。holding_dayは当日を含む。
 def calc_pl_with_after_open(df, index, holding_days, limit_price, α=1, atr_duration=20):
     open_price = df.loc[index, "始値"]

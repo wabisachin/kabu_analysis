@@ -60,7 +60,7 @@ if not os.path.exists("analysis/{}".format(name_selected)):
 # mc.visualize_for_EV_by_heatmap(df, "x4", "x1", name_selected, save=True)
 
 print("x2>2条件下のヒートマップ検証")
-mc.visualize_for_EV_by_heatmap(df[df["x2"]>2], "x4", "x1", name_selected)
+# mc.visualize_for_EV_by_heatmap(df[df["x2"]>7], "x4", "x1", name_selected)
 # mc.visualize_for_EV_by_heatmap(df[(df["x2"]>2)&(df["x7"]==1)], "x4", "x1", name_selected)
 # mc.visualize_for_EV_by_heatmap(df[(df["x2"]>2)&(df["x7"]==1)], "x4", "x1", name_selected)
 # mc.visualize_for_EV_by_heatmap(df[(df["x2"]>2)&(df["x2"]<4)], "x7", "x1", name_selected)
@@ -138,10 +138,11 @@ mc.visualize_for_EV_by_heatmap(df[df["x2"]>2], "x4", "x1", name_selected)
 #     # return df_heatmap
 
 
-# print("-----x2<1, 1<x1<3,かつsの結果-----")
-# print(df.loc[(df["x2"]<1) &(df["x1"]<3) & (df["x1"]>1) & (df["position"]=="s")])
-# print("-----x2<1, 1<x1<3,かつsの結果-----")
-# print(df.loc[(df["x2"]<1) &(df["x1"]<3) & (df["x1"]>1) & (df["position"]=="s")].describe())
+print("-----x2>7, 0<x1<2,かつlの結果-----")
+print(df.loc[(df["x2"]>7) &(df["x1"]<2) & (df["x1"]>0) & (df["position"]=="l")])
+# print("-----x2>7, 0<x1<2,かつlの結果-----")
+print(df.loc[(df["x2"]>7) &(df["x1"]<2) & (df["x1"]>0) & (df["position"]=="l")].describe())
+
 
 
 # print("-------x2>2の結果----------")
