@@ -268,7 +268,7 @@ def plot_all_biaxial_graph_for_EV(df, name_dir):
         plot_biaxial_graph_for_EV(df, variable, name_dir)
 
 #2変数のpivot_tableをポジション別で作成。(value:pl_atr)
-def make_pivot_table_for_pl(df, var1, var2, margins=True):
+def make_pivot_table_for_pl(df, var1, var2, margins=True, pl_type="pl_atr"):
 
     #戻り値
     dict_heatmap = {}
@@ -292,9 +292,9 @@ def make_pivot_table_for_pl(df, var1, var2, margins=True):
             df_temp["{}_label".format(var)] = pd.cut(x=df_temp[var], bins=label_list[var]["bins"], labels=label_list[var]["bin_labels"])
         #カテゴリー化された2変数に対して、ピボットテーブルを作成(value:pl_atr)
         if margins:
-            df_heatmap = pd.pivot_table(df_temp, index="{}_label".format(var1), columns="{}_label".format(var2), values="pl_atr", margins=True)
+            df_heatmap = pd.pivot_table(df_temp, index="{}_label".format(var1), columns="{}_label".format(var2), values=pl_type, margins=True)
         else:
-            df_heatmap = pd.pivot_table(df_temp, index="{}_label".format(var1), columns="{}_label".format(var2), values="pl_atr")
+            df_heatmap = pd.pivot_table(df_temp, index="{}_label".format(var1), columns="{}_label".format(var2), values=pl_type)
         dict_heatmap[position] = df_heatmap
 
     return dict_heatmap
@@ -332,9 +332,9 @@ def make_pivot_table_for_N(df, var1, var2, margins=True):
     return dict_heatmap
 
 #2変数間のplヒートマップ図の可視化。
-def visualize_for_EV_by_heatmap(df, var1, var2, name_dir="", save=False):
+def visualize_for_EV_by_heatmap(df, var1, var2, name_dir="", save=False, pl_type="pl_atr"):
 
-    dict_pivot_pl = make_pivot_table_for_pl(df, var1, var2, margins=False)
+    dict_pivot_pl = make_pivot_table_for_pl(df, var1, var2, margins=False, pl_type=pl_type)
     dict_pivot_N = make_pivot_table_for_N(df, var1, var2, margins=False)
     #描写領域の確保
     fig = plt.figure(figsize=(12,8))
@@ -343,14 +343,14 @@ def visualize_for_EV_by_heatmap(df, var1, var2, name_dir="", save=False):
     #２種類のヒートマップ図をポジション別(ls, l, s)にそれぞれ可視化(pl_atr, N)
     for i, position in enumerate(positions, 1):
         ax1 = fig.add_subplot(len(positions),2,i*2-1)
-        ax1.set_title("<{}: pl_atr with {}&{}>".format(position,var1, var2))
+        ax1.set_title("<{}: {} with {}&{}>".format(position, pl_type, var1, var2))
         sns.heatmap(dict_pivot_pl[position], ax=ax1,vmin=-1, vmax=1,center=0, cmap="coolwarm",annot=True, fmt=".2f")
         ax2 = fig.add_subplot(len(positions),2,i*2)
         ax2.set_title("<{}: N with {}&{}>".format(position, var1, var2))
         sns.heatmap(dict_pivot_N[position], ax=ax2, vmin=0, vmax=1000,cmap="YlGn", annot=True, fmt="d")
 
     #save=Falseなら画像保存せずにfigureに表示する
-    plt.savefig("analysis/{}/Heatmap with {}&{} for pl.png".format(name_dir,var1, var2)) if save else plt.show()
+    plt.savefig("analysis/{}/Heatmap with {}&{} for {}.png".format(name_dir,var1, var2, pl_type)) if save else plt.show()
 
 
 
