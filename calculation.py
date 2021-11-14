@@ -148,13 +148,13 @@ print("x2>2条件下のヒートマップ検証")
 #     # return df_heatmap
 
 
-# print("-----x2>7, 0<x1<2,かつlの結果-----")
-# print(df.loc[(df["x2"]>4) &(df["x1"]<2) & (df["x1"]>0) & (df["position"]=="l")])
-# print(df.loc[(df["x2"]>4) &(df["x1"]<2) & (df["x1"]>0) & (df["position"]=="l")].describe())
+print("-----x2>7, 0<x1<2,かつlの結果-----")
+print(df.loc[(df["x2"]>4) &(df["x1"]<2) & (df["x1"]>1) & (df["position"]=="l")])
+print(df.loc[(df["x2"]>4) &(df["x1"]<2) & (df["x1"]>1) & (df["position"]=="l")].describe())
 # print(df.loc[(df["x2"]>4) &(df["x1"]<2) & (df["x1"]>0) & (df["x7"]==1) & (df["position"]=="l")])
 # print(df.loc[(df["x2"]>4) &(df["x1"]<2) & (df["x1"]>0) & (df["x7"]==1) & (df["position"]=="l")].describe())
-print(df.loc[(df["x2"]>4)  & (df["x1"]>3) & (df["x7"]==0) & (df["position"]=="l")])
-print(df.loc[(df["x2"]>4) & (df["x1"]>3) & (df["x7"]==0) & (df["position"]=="l")].describe())
+# print(df.loc[(df["x2"]>4)  & (df["x1"]>3) & (df["x7"]==0) & (df["position"]=="l")])
+# print(df.loc[(df["x2"]>4) & (df["x1"]>3) & (df["x7"]==0) & (df["position"]=="l")].describe())
 
 
 

@@ -103,14 +103,14 @@ X8: 当日寄付の日経の前日比
 # X: 当日NY市場の前日比
 # X: 当日USD/JPYの前日比
 
-このうち値の算出に固有のパラメータを必要とするのはX1,X2, X3, X4。
+このうち値の算出に独自パラメータを必要とするのはX1,X2, X3, X4。
 """
 
 #----------------------------------------------以下、プログラム開始↓↓↓-------------------------------------------------------
 
 #この手法の概要（スクリーニング条件）
 """
-大きなギャップが発生した日に指値待機して、約定したら〇日後の大引けで決済する順張り手法の検証。
+寄付でエントリーして、〇日後の大引けで決済する順張り手法の検証。
 """
 
 #スクリーニング条件
@@ -132,30 +132,38 @@ X8: 当日寄付の日経の前日比
 import pandas as pd
 import datetime as dt
 import statistics as st
-
-#モジュール内でテストを実行する場合はこっちを利用
+# import module.module as md
+# import module.module_calc_variable as mcv
+#exection.pyで実行する場合はこっちを有効。
+# import strategy.module.module as md#最終的に一階層上のexection.pyから実行することになるので、その位置からのパスを明示しないとエラーとなる。
+# import strategy.module.module_calc_variable as mcv
 if __name__ == "__main__":
-    import module.module as md 
+    import module.module as md
     import module.module_calc_variable as mcv
-    df_NI225 = pd.read_csv("../dataset/NI225/nikkei225_20010903_20211110.csv")#検証に必要なファイルの事前読み込み
-
+    #検証に必要なファイルの事前読み込み
+    df_NI225 = pd.read_csv("../dataset/NI225/nikkei225_20010903_20211110.csv")
 #exection.pyで実行する場合はこっちを有効。
 else:
     import strategy.module.module as md#最終的に一階層上のexection.pyから実行することになるので、その位置からのパスを明示しないとエラーとなる。
     import strategy.module.module_calc_variable as mcv
-    df_NI225 = pd.read_csv("./dataset/NI225/nikkei225_20010903_20211110.csv")#検証に必要なファイルの事前読み込み
+    #検証に必要なファイルの事前読み込み
+    df_NI225 = pd.read_csv("./dataset/NI225/nikkei225_20010903_20211110.csv")
 
 #pandasのオプション設定
 pd.set_option("display.max_rows", None)
 
+# #検証に必要なファイルの事前読み込み
+# df_NI225 = pd.read_csv("./dataset/NI225/nikkei225_20010903_20211110.csv")
+
 # 今回はpandasのDataframe型を利用する
-def after_open_follow_close(dataset, code, holding_days, α, atr_ratio=2, params_x1=20, params_x2=20, params_x3=20, params_x4=60):#入力パラメータは基本的には保有日数のみでいい。
+def open_follow_close_losscut_by_yesterday_close(dataset, code, holding_days, α, params_x1=20, params_x2=20, params_x3=20, params_x4=60):#今回アルファは実際には不使用
 
     # 戻り値の変数定義
     trades = pd.DataFrame(columns=["date", "code", "position", "pl_lc","pl_atr",  "x1", "x2", "x3", "x4", "x5", "x6", "x7", "x8"]) #各トレード結果のリストを格納。breakedは期間にブレイクされた日数,ratioはギャップ幅とATRとの比率
     params = [] #保有日数、LC乗数値α、各説明変数に用いたパラメータ値(X1, X2, X3, X4)を格納 ※リスト番号はdef定義時の引数の順番に対応（data_set,codeは除く)
 
-    #データ構造をキャスト
+    #tradesのデータ構造をキャスト
+
     trades["pl_lc"] = trades["pl_lc"].astype(float)
     trades["pl_atr"] = trades["pl_atr"].astype(float)
     trades["x1"] = trades["x1"].astype(float)
@@ -167,8 +175,20 @@ def after_open_follow_close(dataset, code, holding_days, α, atr_ratio=2, params
     trades["x7"] = trades["x7"].astype(int)
     trades["x8"] = trades["x8"].astype(float)
 
+    #一時変数定義
+    position = "" #トレードの売買種別（L ro S)を格納
+    ath = 0 #ATH(直近ｎ日間における一日の平均ボラティレティ)
+
     #独自パラメータが必要な説明変数のパラメータ設定
     params_duration = [params_x1, params_x2, params_x3, params_x4]
+
+    # #検証パラメータのユーザー設定(初回のみ表示させるためのif分)
+    # if(holding_days == 0):
+
+    #     #検証初回はパラメータを入力させる
+    #     print("パラメータ１：保有日数を入力してください")
+    #     holding_days = int(input())
+    #     params.append(holding_days)
         
     #検証
     for index, data in dataset.iterrows():
@@ -196,62 +216,81 @@ def after_open_follow_close(dataset, code, holding_days, α, atr_ratio=2, params
         gap_rate = (open_today - close_yesterday)/close_yesterday
         # print("---gaprate---")
         # print(gap_rate)
-        
-        #前日比±2％以下の変動幅はギャップ無しの為スキップ
-        if(-0.02 < gap_rate and gap_rate < 0.02):
-            continue
 
-        #指値価格の算出
-        atr = md.calc_ATR(dataset, index)
-        limit_price = close_yesterday + atr*atr_ratio if open_today > close_yesterday else close_yesterday - atr*atr_ratio
+        #前日比プラス2％以上なら特別気配確実によりロングエントリー(前日比プラス-2％以下なら特別気配確実によりショートエントリー)
+        if(gap_rate > 0.02 or gap_rate < -0.02):
 
-        #ギャップがあったとしても、寄付エントリーになってしまう場合はopen_follow_close手法と検証結果が被るのでスキップ
-        if(open_today > close_yesterday and limit_price>=open_today):
-            continue
-        elif(open_today < close_yesterday and limit_price<=open_today):
-            continue
-        
-        #指値が刺さらなかったらスキップ
-        if(open_today > close_yesterday and limit_price <= dataset.loc[index, "安値"]):
-            continue
-        elif(open_today < close_yesterday and limit_price >= dataset.loc[index, "高値"]):
-            continue
+            #先に損益計算しとく
+            pl = md.calc_pl_with_open_losscut_by_yesterday_close(dataset, index, holding_days)
+            
+            #説明変数、目的変数の計算
+            trade["date"] = data["日付"]
+            trade["position"] = "l" if gap_rate >0 else "s"
+            trade["code"] = code
+            trade["pl_lc"] = pl["pl_lc"]
+            trade["pl_atr"] =pl["pl_atr"]
+            trade["x1"] = mcv.calc_x1(dataset, index, params_x1)
+            trade["x2"] = mcv.calc_x2(dataset, index, params_x2)
+            trade["x3"] = mcv.calc_x3(dataset, index, params_x3)
+            trade["x4"] = mcv.calc_x4(dataset, index, params_x4)
+            trade["x5"] = mcv.calc_x5(dataset, index)
+            trade["x6"] = mcv.calc_x6(dataset, index)
+            trade["x7"] = mcv.calc_x7(dataset, index)
+            trade["x8"] = mcv.calc_x8(dataset, df_NI225, index)
 
-        #指値待機＆約定したパターンのトレード結果集計
-
-        trade["date"] = data["日付"]
-        trade["position"] = "l" if gap_rate >0 else "s"
-        trade["code"] = code
-        trade["pl_lc"] = md.calc_pl_with_after_open(dataset, index, holding_days, limit_price)
-        trade["pl_atr"] = trade["pl_lc"] * α
-        trade["x1"] = mcv.calc_x1(dataset, index, params_x1)
-        trade["x2"] = mcv.calc_x2(dataset, index, params_x2)
-        trade["x3"] = mcv.calc_x3(dataset, index, params_x3)
-        trade["x4"] = mcv.calc_x4(dataset, index, params_x4)
-        trade["x5"] = mcv.calc_x5(dataset, index)
-        trade["x6"] = mcv.calc_x6(dataset, index)
-        trade["x7"] = mcv.calc_x7(dataset, index)
-        trade["x8"] = mcv.calc_x8(dataset, df_NI225, index)
-
-        trades = trades.append(trade,ignore_index=True)
+            trades = trades.append(trade,ignore_index=True)
 
         # print("----trade結果---")
         # print(trade)
+        
+
+
+        # #GUなら高値ブレイク本数のカウント
+        # if(open_today > close_yesterday):
+        #     # print(len(dataset.loc[index-duration:index-1].query("高値<@open_today & @close_yesterday<高値")))
+        #     counter_breaked = len(dataset.loc[index-params_x3:index-1].query("高値<@open_today & @close_yesterday<高値"))
+        #     position = "l"
+            
+        # #GDなら安値ブレイク本数のカウント
+        # elif(open_today < close_yesterday):
+        #     # print(len(dataset.loc[index-duration:index-1].query("安値 < @close_yesterday & @open_today < 安値")))
+        #     counter_breaked = len(dataset.loc[index-params_x3:index-1].query("安値 < @close_yesterday & @open_today < 安値"))
+        #     position = "s"
+
+        # #閾値を超えた日はエントリー！trade結果を集計
+        # if(counter_breaked >= threshold):  
+        #     # print("閾値を超えました！")   
+        #     pl_lc = md.calc_PL_with_open(dataset, index, position, holding_days, 5, α)
+        #     # print(position)
+        #     # print(pl_lc)
+        #     # print(trade)
+        #     #トレード結果をテーブルへ追加
 
     return {"result": trades, "params": params}
 
-#プログラムテスト用
-if __name__ == '__main__':
+if __name__ == "__main__":
+
 
     # dataset = md.get_data("../dataset/nikkei225_daily/nikkei225_2020.csv")
-    dataset = md.get_data("../dataset/sample_dataset/5218_5year.csv")
+    dataset = md.get_data("../dataset/sample_dataset/9984_5year.csv")
     # dataset = md.get_data("../dataset/data_market_capitalization_top100/9984.csv")
+    # dataset = md.get_data("../dataset/NI225/nikkei225_20010903_20210930.csv")
+
 
     # print(dataset)
-    summary = after_open_follow_close(dataset, "sample", 1, 1)
-    result = summary["result"]
-    print("------------結果---------------")
-    print(result)
-    print(result.describe())
-    # print("----------x2>2の結果------------")
-    # print(result.loc[result["x2"] > 2].describe())
+    summary1 = open_follow_close_losscut_by_yesterday_close(dataset, "sample", 1, 100000)
+    # summary2 = open_follow_close_losscut_by_yesterday_close(dataset, "sample", 3, 100000)
+    result1 = summary1["result"]
+    # result2 = summary2["result"]
+
+    print("------------結果(保有日数１日)---------------")
+    print(result1)
+    print(result1.describe())
+    # print("----------x2>2, x1>5の結果（保有日数１日)------------")
+    # print(result1.loc[(result1["x2"]>2) & (result1["x1"] > 5)].describe())
+
+    # print("------------結果(保有日数３日)---------------")
+    # print(result2)
+    # print(result2.describe())
+    # print("----------x2>2, x1>5の結果（保有日数3日)------------")
+    # print(result2.loc[(result2["x2"]>2) & (result2["x1"] > 5)].describe())
