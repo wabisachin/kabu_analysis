@@ -42,6 +42,10 @@ print("逆指値乗数αの値を入力してください(0.5<α<2.0が現実的
 if(selected_method == "after_open_follow_close"):
     print("エントリー指値を置く位置を入力してください(ATR比)")
     atr_ratio = float(input())
+# #利食い指値付き手法の場合、パラメータの追加
+# if(selected_method == "open_follow_close_losscut_by_yesterday_close_with_limit"):
+#     print("利食い指値を置く値幅を入力してください(円)")
+#     limit_range = float(input())
 
 #変数定義
 results = pd.DataFrame() #全銘柄のトレード結果を格納
@@ -59,6 +63,8 @@ for data_name in selected_dataset:
     #手法別にパラメータが異なるので場合分け（汚いけど)
     if(selected_method == "after_open_follow_close"):
         summary = eval("st.{}(data, code, holding_days, α, atr_ratio, *params)".format(selected_method))
+    # if(selected_method == "open_follow_close_losscut_by_yesterday_close_with_limit"):
+    #     summary = eval("st.{}(data, code, holding_days, limit_range, α, atr_ratio, *params)".format(selected_method))
     else:
         summary = eval("st.{}(data, code, holding_days, α, *params)".format(selected_method))
 
@@ -80,8 +86,11 @@ print("結果をcsv出力するか選んでください(y/n)")
 flag = input()
 
 if(flag=="y"):
+    # 手法別にファイル名を場合分け(汚いけど)
     if(selected_method == "after_open_follow_close"):
         results.to_csv("result/{}__{}__{}days__{}__rate{}.csv".format(datasets_name[selected_label], selected_method, holding_days, α, atr_ratio), index=False)
+    # if(selected_method == "open_follow_close_losscut_by_yesterday_close_with_limit"):
+    #     results.to_csv("result/{}__{}__{}days__{}__limit_{}yen.csv".format(datasets_name[selected_label], selected_method, holding_days, α, limit_range), index=False)
     else:
         results.to_csv("result/{}__{}__{}days__{}.csv".format(datasets_name[selected_label], selected_method, holding_days, α), index=False)
 

@@ -9,36 +9,74 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import os
 
-#自作モジュール
-import module.module_calclation as mc
+# #自作モジュール
+# import module.module_calclation as mc
 
 #pandasのオプション設定
 pd.set_option("display.max_rows", None)
 pd.set_option("display.max_columns", None)
 
 #フォルダ内にある分析手法を取得
-results = glob.glob("./result/*")
+results = glob.glob("../result/*")
 
-#パスを削除して、フォルダ名のみを抽出
-# result_name_list = [s.replace("./result/", "").replace(".py", "") for s in results]
 
+"""
+エントリー初日に陰線で引けた場合、翌日以降も下がるイメージがある。
+ということは初日の動向によって判断を条件分岐させたほうがいいのではないか？と疑問が生じた。
+"""
 #検証データを選択
-print("<検証したいトレードシステムを選択してください(半角数字）>")
-[print("{}: {}".format(i,s.replace("./result/", ""))) for i, s in enumerate(results)]
-selected_label = int(input())
+#結合元データの選択
+print("<保有期間が1日のトレードデータ（トレードデータ1)を選択してください(半角数字）>")
+[print("{}: {}".format(i,s.replace("../result/", ""))) for i, s in enumerate(results)]
+selected_label1 = int(input())
+file_name1 = results[selected_label1]
 
-file_name = results[selected_label]
+#結合させるデータの選択
+print("<保有期間が3日のトレードデータ（トレードデータ2)を選択してください(半角数字）>")
+[print("{}: {}".format(i,s.replace("../result/", ""))) for i, s in enumerate(results)]
+selected_label2 = int(input())
+file_name2 = results[selected_label2]
 
-df = pd.read_csv(file_name)
-print(df.describe())
+#結合元データ
+df1 = pd.read_csv(file_name1)
+#結合させるデータ
+df2 = pd.read_csv(file_name2)
 
+#結合前にそれぞれのpl_atrの名前をrename
+df1 = df1.rename(columns={"pl_lc":"pl_lc_1day", "pl_atr":"pl_atr_1day"})
+df2 = df2.rename(columns={"pl_lc":"pl_lc_3day", "pl_atr":"pl_atr_3day"})
+
+new_df = pd.merge(df1, df2, how="outer", on=["date", "code"])
+diff_list = []
+
+for index, data in new_df.iterrows():
+
+    diff = data["pl_atr_3day"] - data["pl_atr_1day"]
+    diff_list.append(diff)
+
+series = pd.Series(diff_list, name="diff")
+new_df = pd.concat([new_df, series], axis=1)
+new_df.to_csv("{}___and___{}.csv".format(file_name1.replace("../result/", "").replace(".csv", ""), file_name2.replace("../result/", "").replace(".csv", ""))) # print(df.describe())
+
+print("<初日が含み益のケース>")
+print(new_df.loc[(new_df["pl_lc_1day"]>-1)&(new_df["pl_atr_1day"]>=0)&(new_df["x2_x"]>4) & (new_df["x1_x"]>4) &(new_df["position_x"]=="l")].describe())
+print("<初日が含み損のケース>")
+print(new_df.loc[(new_df["pl_lc_1day"]>-1)&(new_df["pl_atr_1day"]<0)&(new_df["x2_x"]>4) & (new_df["x1_x"]>4)& (new_df["position_x"]=="l")].describe())
+print("<x7=1,初日が含み益のケース>")
+print(new_df.loc[(new_df["pl_lc_1day"]>-1)&(new_df["pl_atr_1day"]>=0)&(new_df["x2_x"]>4) & (new_df["x1_x"]>4)& (new_df["x7_x"]==1) &(new_df["position_x"]=="l")].describe())
+print("<x7=1,初日が含み損のケース>")
+print(new_df.loc[(new_df["pl_lc_1day"]>-1)&(new_df["pl_atr_1day"]<0)&(new_df["x2_x"]>4) & (new_df["x1_x"]>4)& (new_df["x7_x"]==1)& (new_df["position_x"]=="l")].describe())
+print("<x7=0,初日が含み益のケース>")
+print(new_df.loc[(new_df["pl_lc_1day"]>-1)&(new_df["pl_atr_1day"]>=0)&(new_df["x2_x"]>4) & (new_df["x1_x"]>4) & (new_df["x7_x"]==0)&(new_df["position_x"]=="l")].describe())
+print("<x7=0,初日が含み損のケース>")
+print(new_df.loc[(new_df["pl_lc_1day"]>-1)&(new_df["pl_atr_1day"]<0)&(new_df["x2_x"]>4) & (new_df["x1_x"]>4) & (new_df["x7_x"]==0)& (new_df["position_x"]=="l")].describe())
 #トレード手法に対応するディレクトリの作成
-name_selected = file_name.replace("./result/", "").replace(".csv", "")
-if not os.path.exists("analysis/{}".format(name_selected)):
-    os.mkdir("analysis/{}".format(name_selected))
+# name_selected = file_name.replace("./result/", "").replace(".csv", "")
+# if not os.path.exists("analysis/{}".format(name_selected)):
+#     os.mkdir("analysis/{}".format(name_selected))
 
 #２軸グラフを画像ファイルとして保存
-mc.plot_all_biaxial_graph_for_EV(df, name_selected)
+# mc.plot_all_biaxial_graph_for_EV(df, name_selected)
 
 #heatmapの作成
 # dict_heat_pl = mc.make_pivot_table_for_pl(df,"x2", "x1")
@@ -50,17 +88,17 @@ mc.plot_all_biaxial_graph_for_EV(df, name_selected)
 #     print("<<<count>>>")
 #     print(dict_heat_N[position])
 
-mc.visualize_for_EV_by_heatmap(df, "x1", "x2", name_selected, save=True)
-mc.visualize_for_EV_by_heatmap(df, "x3", "x2", name_selected, save=True)
-mc.visualize_for_EV_by_heatmap(df, "x4", "x2", name_selected, save=True)
-mc.visualize_for_EV_by_heatmap(df, "x5", "x2", name_selected, save=True)
-mc.visualize_for_EV_by_heatmap(df, "x6", "x2", name_selected, save=True)
-mc.visualize_for_EV_by_heatmap(df, "x7", "x2", name_selected, save=True)
-mc.visualize_for_EV_by_heatmap(df, "x3", "x1", name_selected, save=True)
-mc.visualize_for_EV_by_heatmap(df, "x4", "x1", name_selected, save=True)
+# mc.visualize_for_EV_by_heatmap(df, "x1", "x2", name_selected, save=True)
+# mc.visualize_for_EV_by_heatmap(df, "x3", "x2", name_selected, save=True)
+# mc.visualize_for_EV_by_heatmap(df, "x4", "x2", name_selected, save=True)
+# mc.visualize_for_EV_by_heatmap(df, "x5", "x2", name_selected, save=True)
+# mc.visualize_for_EV_by_heatmap(df, "x6", "x2", name_selected, save=True)
+# mc.visualize_for_EV_by_heatmap(df, "x7", "x2", name_selected, save=True)
+# mc.visualize_for_EV_by_heatmap(df, "x3", "x1", name_selected, save=True)
+# mc.visualize_for_EV_by_heatmap(df, "x4", "x1", name_selected, save=True)
 
 
-print("x2>2条件下のヒートマップ検証")
+# print("x2>2条件下のヒートマップ検証")
 # mc.visualize_for_EV_by_heatmap(df[df["x2"]>4], "x4", "x1", name_selected)
 # mc.visualize_for_EV_by_heatmap(df[(df["x2"]>4) & (df["x7"]==0)], "x3", "x1", name_selected)
 # mc.visualize_for_EV_by_heatmap(df[(df["x2"]>4) & (df["x4"]<5)], "x7", "x1", name_selected)
@@ -147,29 +185,29 @@ print("x2>2条件下のヒートマップ検証")
 #     # return df_heatmap
 
 
-print("-----x4<5の結果-----")
-print(df.loc[(df["x4"]<=5) & (df["x2"]>4) & (df["x1"]>2) & (df["x1"]<4)& (df["position"]=="l")].describe())
-print("-----x4>5の結果-----")
-print(df.loc[(df["x4"]>5) & (df["x2"]>4) & (df["x1"]>2) & (df["x1"]<4) & (df["position"]=="l")].describe())
-print("-----x4<5, x7=1の結果-----")
-print(df.loc[(df["x4"]<=5) & (df["x2"]>4) & (df["x1"]>2) & (df["x1"]<4) & (df["x7"]==1) & (df["position"]=="l")].describe())
-print("-----x4>5, x7=1の結果-----")
-print(df.loc[(df["x4"]>5) & (df["x2"]>4) & (df["x1"]>2) & (df["x1"]<4) & (df["x7"]==1) & (df["position"]=="l")].describe())
-print("-----x4<5, x7=0の結果-----")
-print(df.loc[(df["x4"]<=5) & (df["x2"]>4) & (df["x1"]>2) & (df["x1"]<4) & (df["x7"]==0) & (df["position"]=="l")].describe())
-print("-----x4>5, x7=0の結果-----")
-print(df.loc[(df["x4"]>5) & (df["x2"]>4) & (df["x1"]>2) & (df["x1"]<4) & (df["x7"]==0) & (df["position"]=="l")].describe())
+# print("-----x4<5の結果-----")
+# print(df.loc[(df["x4"]<=5) & (df["x2"]>4) & (df["x1"]>2) & (df["x1"]<4)& (df["position"]=="l")].describe())
+# print("-----x4>5の結果-----")
+# print(df.loc[(df["x4"]>5) & (df["x2"]>4) & (df["x1"]>2) & (df["x1"]<4) & (df["position"]=="l")].describe())
+# print("-----x4<5, x7=1の結果-----")
+# print(df.loc[(df["x4"]<=5) & (df["x2"]>4) & (df["x1"]>2) & (df["x1"]<4) & (df["x7"]==1) & (df["position"]=="l")].describe())
+# print("-----x4>5, x7=1の結果-----")
+# print(df.loc[(df["x4"]>5) & (df["x2"]>4) & (df["x1"]>2) & (df["x1"]<4) & (df["x7"]==1) & (df["position"]=="l")].describe())
+# print("-----x4<5, x7=0の結果-----")
+# print(df.loc[(df["x4"]<=5) & (df["x2"]>4) & (df["x1"]>2) & (df["x1"]<4) & (df["x7"]==0) & (df["position"]=="l")].describe())
+# print("-----x4>5, x7=0の結果-----")
+# print(df.loc[(df["x4"]>5) & (df["x2"]>4) & (df["x1"]>2) & (df["x1"]<4) & (df["x7"]==0) & (df["position"]=="l")].describe())
 
 
 
 
-print("-----x2>7, 0<x1<2,かつlの結果-----")
+# print("-----x2>7, 0<x1<2,かつlの結果-----")
 # print(df.loc[(df["x2"]>4) &(df["x1"]<4) & (df["x1"]>2) & (df["position"]=="l")])
 # print(df.loc[(df["x2"]>4) &(df["x1"]<4) & (df["x1"]>2) & (df["position"]=="l")].describe())
 # print(df.loc[(df["x2"]>4) &(df["x1"]<4) & (df["x1"]>3) & (df["x7"]==0) & (df["position"]=="l")])
 # print(df.loc[(df["x2"]>4) &(df["x1"]<4) & (df["x1"]>3) & (df["x7"]==0) & (df["position"]=="l")].describe())
-print(df.loc[(df["x2"]>4) & (df["x1"]>4) & (df["x7"]==1) & (df["position"]=="l")])
-print(df.loc[(df["x2"]>4) & (df["x1"]>4) & (df["x7"]==1) & (df["position"]=="l")].describe())
+# print(df.loc[(df["x2"]>4) & (df["x1"]>4) & (df["x7"]==1) & (df["position"]=="l")])
+# print(df.loc[(df["x2"]>4) & (df["x1"]>4) & (df["x7"]==1) & (df["position"]=="l")].describe())
 # print(df.loc[(df["x2"]>4) & (df["x1"]>4) & (df["x7"]==1) & (df["position"]=="l")])
 # print(df.loc[(df["x2"]>4) & (df["x1"]>4) & (df["x7"]==1) & (df["position"]=="l")].describe())
 # print(df.loc[(df["x2"]>4)  & (df["x1"]>3) & (df["x7"]==0) & (df["position"]=="l")])
