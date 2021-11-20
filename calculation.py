@@ -38,7 +38,7 @@ if not os.path.exists("analysis/{}".format(name_selected)):
     os.mkdir("analysis/{}".format(name_selected))
 
 #２軸グラフを画像ファイルとして保存
-mc.plot_all_biaxial_graph_for_EV(df, name_selected)
+# mc.plot_all_biaxial_graph_for_EV(df, name_selected)
 
 #heatmapの作成
 # dict_heat_pl = mc.make_pivot_table_for_pl(df,"x2", "x1")
@@ -50,18 +50,20 @@ mc.plot_all_biaxial_graph_for_EV(df, name_selected)
 #     print("<<<count>>>")
 #     print(dict_heat_N[position])
 
-mc.visualize_for_EV_by_heatmap(df, "x1", "x2", name_selected, save=True)
-mc.visualize_for_EV_by_heatmap(df, "x3", "x2", name_selected, save=True)
-mc.visualize_for_EV_by_heatmap(df, "x4", "x2", name_selected, save=True)
-mc.visualize_for_EV_by_heatmap(df, "x5", "x2", name_selected, save=True)
-mc.visualize_for_EV_by_heatmap(df, "x6", "x2", name_selected, save=True)
-mc.visualize_for_EV_by_heatmap(df, "x7", "x2", name_selected, save=True)
-mc.visualize_for_EV_by_heatmap(df, "x3", "x1", name_selected, save=True)
-mc.visualize_for_EV_by_heatmap(df, "x4", "x1", name_selected, save=True)
+# mc.visualize_for_EV_by_heatmap(df, "x1", "x2", name_selected, save=True)
+# mc.visualize_for_EV_by_heatmap(df, "x3", "x2", name_selected, save=True)
+# mc.visualize_for_EV_by_heatmap(df, "x4", "x2", name_selected, save=True)
+# mc.visualize_for_EV_by_heatmap(df, "x5", "x2", name_selected, save=True)
+# mc.visualize_for_EV_by_heatmap(df, "x6", "x2", name_selected, save=True)
+# mc.visualize_for_EV_by_heatmap(df, "x7", "x2", name_selected, save=True)
+# mc.visualize_for_EV_by_heatmap(df, "x9", "x2", name_selected, save=True)
+# mc.visualize_for_EV_by_heatmap(df, "x10", "x2", name_selected, save=True)
+# mc.visualize_for_EV_by_heatmap(df, "x3", "x1", name_selected, save=True)
+# mc.visualize_for_EV_by_heatmap(df, "x4", "x1", name_selected, save=True)
 
 
 print("x2>2条件下のヒートマップ検証")
-# mc.visualize_for_EV_by_heatmap(df[df["x2"]>4], "x4", "x1", name_selected)
+mc.visualize_for_EV_by_heatmap(df[df["x2"]>4], "x10", "x1", name_selected)
 # mc.visualize_for_EV_by_heatmap(df[(df["x2"]>4) & (df["x7"]==0)], "x3", "x1", name_selected)
 # mc.visualize_for_EV_by_heatmap(df[(df["x2"]>4) & (df["x4"]<5)], "x7", "x1", name_selected)
 
@@ -146,20 +148,33 @@ print("x2>2条件下のヒートマップ検証")
 #     # df_heatmap = pd.crosstab(df["{}_label".format(var1)], df["{}_label".format(var2)], margins=True)
 #     # return df_heatmap
 
+#######x4<5, x4>5ではx7=0, x7=1の両ケースともに期待値に2-3倍の開きがある！！
+# print("-----x4<5の結果-----")
+# print(df.loc[(df["x4"]<=5) & (df["x2"]>4) & (df["x1"]>2) & (df["x1"]<4)& (df["position"]=="l")].describe())
+# print("-----5<x4の結果-----")
+# print(df.loc[(df["x4"]>5) & (df["x2"]>4) & (df["x1"]>2) & (df["x1"]<4) & (df["position"]=="l")].describe())
+# print("-----x4<5, x7=1の結果-----")
+# print(df.loc[(df["x4"]<=5) & (df["x2"]>4) & (df["x1"]>2) & (df["x1"]<4) & (df["x7"]==1) & (df["position"]=="l")].describe())
+# print("-----5<x4, x7=1の結果-----")
+# print(df.loc[(df["x4"]>5) & (df["x2"]>4) & (df["x1"]>2) & (df["x1"]<4) & (df["x7"]==1) & (df["position"]=="l")].describe())
+# print("-----x4<5, x7=0の結果-----")
+# print(df.loc[(df["x4"]<=5) & (df["x2"]>4) & (df["x1"]>2) & (df["x1"]<4) & (df["x7"]==0) & (df["position"]=="l")].describe())
+# print("-----5<x4, x7=0の結果-----")
+# print(df.loc[(df["x4"]>5) & (df["x2"]>4) & (df["x1"]>2) & (df["x1"]<4) & (df["x7"]==0) & (df["position"]=="l")].describe())
 
-print("-----x4<5の結果-----")
-print(df.loc[(df["x4"]<=5) & (df["x2"]>4) & (df["x1"]>2) & (df["x1"]<4)& (df["position"]=="l")].describe())
-print("-----x4>5の結果-----")
-print(df.loc[(df["x4"]>5) & (df["x2"]>4) & (df["x1"]>2) & (df["x1"]<4) & (df["position"]=="l")].describe())
-print("-----x4<5, x7=1の結果-----")
-print(df.loc[(df["x4"]<=5) & (df["x2"]>4) & (df["x1"]>2) & (df["x1"]<4) & (df["x7"]==1) & (df["position"]=="l")].describe())
-print("-----x4>5, x7=1の結果-----")
-print(df.loc[(df["x4"]>5) & (df["x2"]>4) & (df["x1"]>2) & (df["x1"]<4) & (df["x7"]==1) & (df["position"]=="l")].describe())
-print("-----x4<5, x7=0の結果-----")
-print(df.loc[(df["x4"]<=5) & (df["x2"]>4) & (df["x1"]>2) & (df["x1"]<4) & (df["x7"]==0) & (df["position"]=="l")].describe())
-print("-----x4>5, x7=0の結果-----")
-print(df.loc[(df["x4"]>5) & (df["x2"]>4) & (df["x1"]>2) & (df["x1"]<4) & (df["x7"]==0) & (df["position"]=="l")].describe())
-
+#######x4<5, x4>5ではx7=0, x7=1の両ケースともに期待値に2-3倍の開きがある！！
+# print("-----0<x1<2, x4<5の結果-----")
+# print(df.loc[(df["x4"]<=5) & (df["x2"]>4)& (df["x1"]<2)& (df["position"]=="l")].describe())
+# print("-----0<x1<2, 5<x4の結果-----")
+# print(df.loc[(df["x4"]>5) & (df["x2"]>4)& (df["x1"]<2) & (df["position"]=="l")].describe())
+# print("-----0<x1<2, x4<5, x7=1の結果-----")
+# print(df.loc[(df["x4"]<=5) & (df["x2"]>4)& (df["x1"]<2) & (df["x7"]==1) & (df["position"]=="l")].describe())
+# print("-----0<x1<2, 5<x4, x7=1の結果-----")
+# print(df.loc[(df["x4"]>5) & (df["x2"]>4) & (df["x1"]<2) & (df["x7"]==1) & (df["position"]=="l")].describe())
+# print("-----0<x1<2, x4<5, x7=0の結果-----")
+# print(df.loc[(df["x4"]<=5) & (df["x2"]>4)& (df["x1"]<2) & (df["x7"]==0) & (df["position"]=="l")].describe())
+# print("-----0<x1<2, 5<x4, x7=0の結果-----")
+# print(df.loc[(df["x4"]>5) & (df["x2"]>4) & (df["x1"]<2) & (df["x7"]==0) & (df["position"]=="l")].describe())
 
 
 
@@ -168,12 +183,19 @@ print("-----x2>7, 0<x1<2,かつlの結果-----")
 # print(df.loc[(df["x2"]>4) &(df["x1"]<4) & (df["x1"]>2) & (df["position"]=="l")].describe())
 # print(df.loc[(df["x2"]>4) &(df["x1"]<4) & (df["x1"]>3) & (df["x7"]==0) & (df["position"]=="l")])
 # print(df.loc[(df["x2"]>4) &(df["x1"]<4) & (df["x1"]>3) & (df["x7"]==0) & (df["position"]=="l")].describe())
-print(df.loc[(df["x2"]>4) & (df["x1"]>4) & (df["x7"]==1) & (df["position"]=="l")])
-print(df.loc[(df["x2"]>4) & (df["x1"]>4) & (df["x7"]==1) & (df["position"]=="l")].describe())
+# print(df.loc[(df["x2"]>7) & (df["x1"]>1)& (df["x1"]<1.5)& (df["position"]=="l")])
+# print(df.loc[(df["x2"]>7) & (df["x1"]>1) & (df["x1"]<1.5) & (df["position"]=="l")].describe())
 # print(df.loc[(df["x2"]>4) & (df["x1"]>4) & (df["x7"]==1) & (df["position"]=="l")])
 # print(df.loc[(df["x2"]>4) & (df["x1"]>4) & (df["x7"]==1) & (df["position"]=="l")].describe())
 # print(df.loc[(df["x2"]>4)  & (df["x1"]>3) & (df["x7"]==0) & (df["position"]=="l")])
 # print(df.loc[(df["x2"]>4) & (df["x1"]>3) & (df["x7"]==0) & (df["position"]=="l")].describe())
+
+# print("(ボロ株分析1<x1<1.5)")
+# print(df.loc[(df["x2"]>7) & (df["x1"]>1) & (df["x1"]<1.5) & (df["position"]=="l")].describe())
+# print("(ボロ株分析1.5<x1<2)")
+# print(df.loc[(df["x2"]>7) & (df["x1"]>=1.5) & (df["x1"]<2) & (df["position"]=="l")].describe())
+# print("(ボロ株分析2<x1<2.5)")
+# print(df.loc[(df["x2"]>7) & (df["x1"]>=2) & (df["x1"]<2.5) & (df["position"]=="l")].describe())
 
 
 # print(df.loc[(df["x2"]>1) & (df["x2"]<2) & (df["x1"]<2) & (df["x1"]>1) & (df["position"]=="l")].describe())

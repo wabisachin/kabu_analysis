@@ -15,6 +15,8 @@ X5: 前日引け~当日寄付きまでの間に、連続して高値を巻き込
 X6: 前日がATR幅以上の下落であるかどうか(大陰線全返しの検証)
 X7: 前日が陰線であるかどうか
 X8: 当日寄付の日経の前日比
+X9: 前日の陽線(陰線)の長さ(直近20日間のATRに対する比率で計算)
+X10:前日３日間の上昇率(直近20日間ATRに対する比率)
 
 # X: 決算発表が前日にあったかどうか
 # X: 寄付の約定枚数(直近20日の出来高平均に対する比率)
@@ -198,5 +200,33 @@ def calc_x8(df, df_NI225, index):
     # print("----ratio:{}".format(ratio))
 
     return ratio
+
+def calc_x9(df, index, duration=20):
+
+    atr = calc_ATR(df, index, duration)
+    open_yesterday = df.loc[index-1, "始値"]
+    close_yesterday = df.loc[index-1, "終値"]
+
+    x1 = (close_yesterday - open_yesterday)/atr
+    # print("--------")
+    # print(df.loc[index,"日付"])
+    # print("<x9のパラメータ値>")
+    # print(open_yesterday,close_yesterday, atr)
+
+    return x1
+
+def calc_x10(df, index, days=3, duration=20):
+    atr = calc_ATR(df, index, duration)
+
+    open_price = df.loc[index-days, "始値"]
+    end_price = df.loc[index-1, "終値"]
+    # print("<x10のパラメータ値>")
+    # print(open_price, end_price, atr)
+    x1 = (end_price - open_price)/atr
+
+    return x1
+
+
+
 
 
