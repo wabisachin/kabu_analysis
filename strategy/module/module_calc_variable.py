@@ -14,9 +14,10 @@ X4: 直近６０日間に、当日寄付時点で依然として上にある高�
 X5: 前日引け~当日寄付きまでの間に、連続して高値を巻き込んだ本数
 X6: 前日がATR幅以上の下落であるかどうか(大陰線全返しの検証)
 X7: 前日が陰線であるかどうか
-X8: 当日寄付の日経の前日比
+X8: 当日寄付の日経平均の前日比
 X9: 前日の陽線(陰線)の長さ(直近20日間のATRに対する比率で計算)
 X10:前日３日間の上昇率(直近20日間ATRに対する比率)
+X11: 当日日経平均の場中値上がり率
 
 # X: 決算発表が前日にあったかどうか
 # X: 寄付の約定枚数(直近20日の出来高平均に対する比率)
@@ -226,6 +227,30 @@ def calc_x10(df, index, days=3, duration=20):
 
     return x1
 
+def calc_x11(df, df_NI225, index):
+    today = df.loc[index, "日付"]
+    # yesterday = df.loc[index-1, "日付"]
+    # print(df_NI225["日付"].dtype)
+    # print(type(today))
+    # print("------今日の日付:{}-----".format(today))
+    # print("------昨日の日付:{}-----".format(yesterday))
+
+    today_NI225 = df_NI225.query("日付 == '{}'".format(today))
+    # today_NI225 = df_NI225.query("日付 == '2016/12/16'".format(today))
+    # print("-----today_NI225:{}".format(today_NI225))
+    # yesterday_NI225 = df_NI225.loc[df["日付"] == yesterday]
+    # yesterday_NI225 = df_NI225.query("日付 == '{}'".format(yesterday))
+    # print("-----today_NI225:{}".format(today_NI225[""]))
+    # print(type(today_NI225["始値"]))
+    # print(today_NI225.index)
+    # print("----始値:{}".format(today_NI225["始値"].replace(",", "")))
+    today_NI225_open = float(today_NI225["始値"].iloc[-1].replace(",", ""))
+    today_NI225_close = float(today_NI225["終値"].iloc[-1].replace(",", ""))
+    # print("----終値:{}".format(yesterday_NI225_close))
+    ratio = (today_NI225_close - today_NI225_open)/today_NI225_open
+    # print("----ratio:{}".format(ratio))
+
+    return ratio
 
 
 

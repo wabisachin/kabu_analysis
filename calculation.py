@@ -64,8 +64,9 @@ if not os.path.exists("analysis/{}".format(name_selected)):
 
 
 print("x2>2条件下のヒートマップ検証")
-# mc.visualize_for_EV_by_heatmap(df[df["x7"]==0], "x1", "x2", name_selected)
-mc.visualize_for_EV_by_heatmap(df[(df["x9"]<1)&(df["x9"]>-1)], "x1", "x2", name_selected)
+mc.visualize_for_EV_by_heatmap(df[(df["x11"]>=0)&(df["x9"]<1)&(df["x9"]>-1)], "x1", "x2", name_selected, "x11>=0")
+mc.visualize_for_EV_by_heatmap(df[(df["x11"]<0)&(df["x9"]<1)&(df["x9"]>-1)], "x1", "x2", name_selected, "x11<0")
+# mc.visualize_for_EV_by_heatmap(df[(df["x9"]<1)&(df["x9"]>-1)], "x1", "x2", name_selected)
 # mc.visualize_for_EV_by_heatmap(df[(df["x2"]>2)], "x9", "x1", name_selected)
 
 # mc.visualize_for_EV_by_heatmap(df[(df["x2"]>0)&(df["x2"]<2)], "x4", "x1", name_selected, "0<x2<2")
