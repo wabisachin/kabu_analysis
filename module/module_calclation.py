@@ -341,12 +341,13 @@ def make_pivot_table_for_N(df, var1, var2, margins=True):
     return dict_heatmap
 
 #2変数間のplヒートマップ図の可視化。
-def visualize_for_EV_by_heatmap(df, var1, var2, name_dir="", save=False, pl_type="pl_atr"):
+def visualize_for_EV_by_heatmap(df, var1, var2, name_dir="", title="figure1", save=False, pl_type="pl_atr"):
 
     dict_pivot_pl = make_pivot_table_for_pl(df, var1, var2, margins=False, pl_type=pl_type)
     dict_pivot_N = make_pivot_table_for_N(df, var1, var2, margins=False)
     #描写領域の確保
     fig = plt.figure(figsize=(12,8))
+    fig.suptitle(title)
     plt.subplots_adjust(wspace=0.3, hspace=0.6)
     positions = ["ls", "l", "s"]
     #２種類のヒートマップ図をポジション別(ls, l, s)にそれぞれ可視化(pl_atr, N)

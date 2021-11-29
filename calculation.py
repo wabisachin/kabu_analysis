@@ -60,12 +60,55 @@ if not os.path.exists("analysis/{}".format(name_selected)):
 # mc.visualize_for_EV_by_heatmap(df, "x10", "x2", name_selected, save=True)
 # mc.visualize_for_EV_by_heatmap(df, "x3", "x1", name_selected, save=True)
 # mc.visualize_for_EV_by_heatmap(df, "x4", "x1", name_selected, save=True)
+# mc.visualize_for_EV_by_heatmap(df, "x5", "x1", name_selected, save=True)
 
 
 print("x2>2条件下のヒートマップ検証")
-mc.visualize_for_EV_by_heatmap(df[df["x2"]>4], "x10", "x1", name_selected)
+# mc.visualize_for_EV_by_heatmap(df[df["x7"]==0], "x1", "x2", name_selected)
+mc.visualize_for_EV_by_heatmap(df[(df["x9"]<1)&(df["x9"]>-1)], "x1", "x2", name_selected)
+# mc.visualize_for_EV_by_heatmap(df[(df["x2"]>2)], "x9", "x1", name_selected)
+
+# mc.visualize_for_EV_by_heatmap(df[(df["x2"]>0)&(df["x2"]<2)], "x4", "x1", name_selected, "0<x2<2")
+# mc.visualize_for_EV_by_heatmap(df[(df["x2"]>2)&(df["x2"]<4)], "x4", "x1", name_selected, "2<x2<4")
+# mc.visualize_for_EV_by_heatmap(df[(df["x2"]>4)&(df["x2"]<6)], "x4", "x1", name_selected, "4<x2<6")
+# mc.visualize_for_EV_by_heatmap(df[(df["x2"]>6)&(df["x2"]<8)], "x4", "x1", name_selected, "6<x2<8")
+# mc.visualize_for_EV_by_heatmap(df[(df["x2"]>8)&(df["x2"]<10)], "x4", "x1", name_selected, "8<x2<10")
+# mc.visualize_for_EV_by_heatmap(df[(df["x2"]>10)&(df["x2"]<20)], "x4", "x1", name_selected, "10<x2<20")
+
+# mc.visualize_for_EV_by_heatmap(df[(df["x2"]>0)&(df["x2"]<2)], "x7", "x1", name_selected, "0<x2<2")
+# mc.visualize_for_EV_by_heatmap(df[(df["x2"]>2)&(df["x2"]<4)], "x7", "x1", name_selected, "2<x2<4")
+# mc.visualize_for_EV_by_heatmap(df[(df["x2"]>4)&(df["x2"]<6)], "x7", "x1", name_selected, "4<x2<6")
+# mc.visualize_for_EV_by_heatmap(df[(df["x2"]>6)&(df["x2"]<8)], "x7", "x1", name_selected, "6<x2<8")
+# mc.visualize_for_EV_by_heatmap(df[(df["x2"]>8)&(df["x2"]<10)], "x7", "x1", name_selected, "8<x2<10")
+# mc.visualize_for_EV_by_heatmap(df[(df["x2"]>10)&(df["x2"]<20)], "x7", "x1", name_selected, "10<x2<20")
+
+
+# mc.visualize_for_EV_by_heatmap(df[(df["x2"]>0)&(df["x2"]<2)&(df["x4"]<=5)], "x7", "x1", name_selected, "0<x2<2, x4<5")
+# mc.visualize_for_EV_by_heatmap(df[(df["x2"]>2)&(df["x2"]<4)&(df["x4"]<=5)], "x7", "x1", name_selected, "2<x2<4, x4<5")
+# mc.visualize_for_EV_by_heatmap(df[(df["x2"]>4)&(df["x2"]<6)&(df["x4"]<=5)], "x7", "x1", name_selected, "4<x2<6, x4<5")
+# mc.visualize_for_EV_by_heatmap(df[(df["x2"]>6)&(df["x2"]<8)&(df["x4"]<=5)], "x7", "x1", name_selected, "6<x2<8, x4<5")
+# mc.visualize_for_EV_by_heatmap(df[(df["x2"]>8)&(df["x2"]<10)&(df["x4"]<=5)], "x7", "x1", name_selected, "8<x2<10, x4<5")
+# mc.visualize_for_EV_by_heatmap(df[(df["x2"]>10)&(df["x2"]<20)&(df["x4"]<=5)], "x7", "x1", name_selected, "10<x2<20, x4<5")
+
+# mc.visualize_for_EV_by_heatmap(df[(df["x2"]>0)&(df["x2"]<2)&(df["x4"]>5)], "x7", "x1", name_selected, "0<x2<2, x4>5")
+# mc.visualize_for_EV_by_heatmap(df[(df["x2"]>2)&(df["x2"]<4)&(df["x4"]>5)], "x7", "x1", name_selected, "2<x2<4, x4>5")
+# mc.visualize_for_EV_by_heatmap(df[(df["x2"]>4)&(df["x2"]<6)&(df["x4"]>5)], "x7", "x1", name_selected, "4<x2<6, x4>5")
+# mc.visualize_for_EV_by_heatmap(df[(df["x2"]>6)&(df["x2"]<8)&(df["x4"]>5)], "x7", "x1", name_selected, "6<x2<8, x4>5")
+# mc.visualize_for_EV_by_heatmap(df[(df["x2"]>8)&(df["x2"]<10)&(df["x4"]>5)], "x7", "x1", name_selected, "8<x2<10, x4>5")
+# mc.visualize_for_EV_by_heatmap(df[(df["x2"]>10)&(df["x2"]<20)&(df["x4"]>5)], "x7", "x1", name_selected, "10<x2<20, x4>5")
+
+# mc.visualize_for_EV_by_heatmap(df[(df["x2"]>0)&(df["x2"]<2)], "x9", "x1", name_selected, "0<x2<2")
+# mc.visualize_for_EV_by_heatmap(df[(df["x2"]>2)&(df["x2"]<4)], "x9", "x1", name_selected, "2<x2<4")
+# mc.visualize_for_EV_by_heatmap(df[(df["x2"]>4)&(df["x2"]<6)], "x9", "x1", name_selected, "4<x2<6")
+# mc.visualize_for_EV_by_heatmap(df[(df["x2"]>6)&(df["x2"]<8)], "x9", "x1", name_selected, "6<x2<8")
+# mc.visualize_for_EV_by_heatmap(df[(df["x2"]>8)&(df["x2"]<10)], "x9", "x1", name_selected, "8<x2<10")
+# mc.visualize_for_EV_by_heatmap(df[(df["x2"]>10)&(df["x2"]<20)], "x9", "x1", name_selected, "10<x2<20")
+
+
+# mc.visualize_for_EV_by_heatmap(df[df["x2"]>2], "x4", "x1", name_selected)
+# mc.visualize_for_EV_by_heatmap(df[df["x2"]<2], "x4", "x1", name_selected)
 # mc.visualize_for_EV_by_heatmap(df[(df["x2"]>4) & (df["x7"]==0)], "x3", "x1", name_selected)
-# mc.visualize_for_EV_by_heatmap(df[(df["x2"]>4) & (df["x4"]<5)], "x7", "x1", name_selected)
+# mc.visualize_for_EV_by_heatmap(df[(df["x2"]>4)], "x9", "x1", name_selected)
 
 # mc.visualize_for_EV_by_heatmap(df[df["x2"]>7], "x7", "x1", name_selected)
 # mc.visualize_for_EV_by_heatmap(df[(df["x2"]>7) &(df["x7"] == 1)], "x4", "x1", name_selected)
@@ -75,7 +118,7 @@ mc.visualize_for_EV_by_heatmap(df[df["x2"]>4], "x10", "x1", name_selected)
 # mc.visualize_for_EV_by_heatmap(df[(df["x2"]>2)&(df["x7"]==1)], "x4", "x1", name_selected)
 # mc.visualize_for_EV_by_heatmap(df[(df["x2"]>2)&(df["x7"]==1)], "x4", "x1", name_selected)
 # mc.visualize_for_EV_by_heatmap(df[(df["x2"]>2)&(df["x2"]<4)], "x7", "x1", name_selected)
-# mc.visualize_for_EV_by_heatmap(df[(df["x2"]>4)&(df["x2"]<7)], "x7", "x1", name_selected)
+# mc.visualize_for_EV_by_heatmap(df[(df["x2"]>4)&(df["x4"]<5)], "x7", "x1", name_selected)
 #2変数間のplヒートマップ図の作成。
 # def visualize_for_EV_by_heatmap(df, var1, var2):
 
@@ -178,9 +221,9 @@ mc.visualize_for_EV_by_heatmap(df[df["x2"]>4], "x10", "x1", name_selected)
 
 
 
-print("-----x2>7, 0<x1<2,かつlの結果-----")
-# print(df.loc[(df["x2"]>4) &(df["x1"]<4) & (df["x1"]>2) & (df["position"]=="l")])
-# print(df.loc[(df["x2"]>4) &(df["x1"]<4) & (df["x1"]>2) & (df["position"]=="l")].describe())
+# print("-----x2>7, 0<x1<2,かつlの結果-----")
+# print(df.loc[(df["x2"]>2) &(df["x1"]<2) & (df["x1"]>0)& (df["position"]=="l")])
+# print(df.loc[(df["x2"]>2) &(df["x1"]<2) & (df["x1"]>0) & (df["position"]=="l")].describe())
 # print(df.loc[(df["x2"]>4) &(df["x1"]<4) & (df["x1"]>3) & (df["x7"]==0) & (df["position"]=="l")])
 # print(df.loc[(df["x2"]>4) &(df["x1"]<4) & (df["x1"]>3) & (df["x7"]==0) & (df["position"]=="l")].describe())
 # print(df.loc[(df["x2"]>7) & (df["x1"]>1)& (df["x1"]<1.5)& (df["position"]=="l")])
@@ -218,6 +261,16 @@ print("-----x2>7, 0<x1<2,かつlの結果-----")
 # print(df.loc[(df["position"]=="s") &(df["x2"]>7)].describe())
 
 # print("-----x2>4, x7=1, 7<x1の結果-----")
+# print(df.loc[(df["x2"]>4)&(df["x1"]<1)&(df["x1"]>0)& (df["x7"]==0)& (df["position"]=="l")])
+# print(df.loc[(df["x2"]>4)&(df["x1"]<1)&(df["x1"]>0)&(df["x7"]==0)& (df["position"]=="l")].describe())
+# print("x9<2")
+# print(df.loc[(df["x9"]<2)&(df["x2"]>4)&(df["x1"]<2)&(df["x1"]>1)& (df["x7"]==0)& (df["position"]=="l")])
+# print(df.loc[(df["x9"]<2)&(df["x2"]>4)&(df["x1"]<2)&(df["x1"]>1)&(df["x7"]==0)& (df["position"]=="l")].describe())
+# print("x9>2")
+# print(df.loc[(df["x9"]>2)&(df["x2"]>4)&(df["x1"]<2)&(df["x1"]>1)& (df["x7"]==0)& (df["position"]=="l")])
+# print(df.loc[(df["x9"]>2)&(df["x2"]>4)&(df["x1"]<2)&(df["x1"]>1)&(df["x7"]==0)& (df["position"]=="l")].describe())
+# print(df.loc[(df["x3"]>=15)&(df["position"]=="l")])
+# print(df.loc[(df["x3"]>=15)&(df["position"]=="l")].describe())
 # print(df.loc[(df["x4"]>1)& (df["x2"] >=7)&(df["x1"]>0)& (df["x1"]<2)&(df["position"]=="l")])
 # print(df.loc[(df["x4"]>1)& (df["x2"] >=7)&(df["x1"]>0)& (df["x1"]<2)&(df["position"]=="l")].describe())
 # print(df.loc[(df["x4"]>1)&(df["x2"] >=7)&(df["x1"]>0)& (df["x1"]<2)&(df["position"]=="l")])
