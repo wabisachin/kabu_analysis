@@ -1,6 +1,10 @@
 #!/usr/bin/env python2
 # coding:utf-8
 
+"""
+発見した優位性領域内における収益分布（度数分布）をヒストグラムとして可視化するスクリプト
+"""
+
 # import os
 import glob
 import pandas as pd

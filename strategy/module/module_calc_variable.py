@@ -16,8 +16,11 @@ X6: 前日がATR幅以上の下落であるかどうか(大陰線全返しの検
 X7: 前日が陰線であるかどうか
 X8: 当日寄付の日経平均の前日比
 X9: 前日の陽線(陰線)の長さ(直近20日間のATRに対する比率で計算)
-X10:前日３日間の上昇率(直近20日間ATRに対する比率)
+X10: 前日３日間の上昇率(直近20日間ATRに対する比率)
 X11: 当日日経平均の場中値上がり率
+X12: 前日のボラティリティ(直近20日間のATRに対する比率で計算)
+X13: 前日の値上がり率(直近20日間のATRに対する比率で計算)
+X14: ストップ高連続日数（寄らず）
 
 # X: 決算発表が前日にあったかどうか
 # X: 寄付の約定枚数(直近20日の出来高平均に対する比率)
@@ -252,6 +255,39 @@ def calc_x11(df, df_NI225, index):
 
     return ratio
 
+def calc_x12(df, index, duration=20):
 
+    atr = calc_ATR(df, index, duration)
+    high_yesterday = df.loc[index-1, "高値"]
+    low_yesterday = df.loc[index-1, "安値"]
 
+    x1 = (high_yesterday - low_yesterday)/atr
+    # print("--------")
+    # print(df.loc[index,"日付"])
+    # print("<x9のパラメータ値>")
+    # print(open_yesterday,close_yesterday, atr)
 
+    return x1
+
+def calc_x13(df, index, duration=20):
+
+    atr = calc_ATR(df, index, duration)
+    close_yesterday = df.loc[index-1, "終値"]
+    close_2days_ago = df.loc[index-2, "終値"]
+
+    x1 = (close_yesterday - close_2days_ago)/atr
+    # print("--------")
+    # print(df.loc[index,"日付"])
+    # print("<x9のパラメータ値>")
+    # print(open_yesterday,close_yesterday, atr)
+
+    return x1
+
+def calc_x14(df, index):
+    
+    counter = 0
+    #例外処理１：ストップ高（ストップ安）張り付きはエントリーできないので除外
+    while(df.loc[index-counter-1, "始値"] == df.loc[index-counter-1, "高値"] and df.loc[index-counter-1, "高値"] == df.loc[index-counter-1, "安値"] and df.loc[index-counter-1, "安値"] == df.loc[index-counter-1, "終値"] and abs(df.loc[index-counter-2, "終値"] - df.loc[index-counter-1, "始値"])/df.loc[index-counter-2, "終値"] > 0.1):
+            counter = counter + 1
+
+    return counter

@@ -207,7 +207,7 @@ def open_follow_close_losscut_by_yesterday_close(dataset, code, holding_days, α
         if (index + holding_days > len(dataset)):
             continue
         #例外処理１：ストップ高（ストップ安）張り付きはエントリーできないので除外
-        if (data["始値"] == data["高値"] and data["高値"] == data["安値"] and data["安値"] == data["終値"] and abs(dataset.loc[index-1, "終値"]- dataset.loc[index, "始値"])/dataset.loc[index, "始値"] > 0.1):
+        if (data["始値"] == data["高値"] and data["高値"] == data["安値"] and data["安値"] == data["終値"] and abs(dataset.loc[index-1, "終値"]- dataset.loc[index, "始値"])/dataset.loc[index-1, "終値"] > 0.1):
             continue    
         
         open_today = data["始値"]
