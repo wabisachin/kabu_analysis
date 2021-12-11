@@ -21,6 +21,8 @@ X11: 当日日経平均の場中値上がり率
 X12: 前日のボラティリティ(直近20日間のATRに対する比率で計算)
 X13: 前日の値上がり率(直近20日間のATRに対する比率で計算)
 X14: ストップ高連続日数（寄らず）
+X15:前日終値が移動平均線より上（下）にあるか
+x16:前日終値の移動平均線乖離率のATR比（初期値25日）
 
 # X: 決算発表が前日にあったかどうか
 # X: 寄付の約定枚数(直近20日の出来高平均に対する比率)
@@ -49,6 +51,13 @@ def calc_volume_avg(df, index, duration=20):
     volume_ave = temp_df.describe().loc["mean", "出来高"]
 
     return volume_ave
+
+def calc_close_avg(df, index, duration=20):
+    temp_df = df.loc[index-duration:index-1]
+    # print(temp_df.describe())
+    close_ave = temp_df.describe().loc["mean", "終値"]
+
+    return close_ave
 
 #--------------------------ここから説明変数の算出関数---------------------------------------
 
@@ -291,3 +300,40 @@ def calc_x14(df, index):
             counter = counter + 1
 
     return counter
+
+def calc_x15(df, index, duration=25):
+
+    #戻り値
+    flag = 0
+
+    open_today = df.loc[index, "始値"]
+    close_yesterday = df.loc[index-1, "終値"]
+    close_ave = calc_close_avg(df, index, duration)
+
+    #GUかつ前日終値が移動平均より上ならフラグ点灯
+    if((open_today > close_yesterday) and (close_yesterday > close_ave)):
+        flag = 1
+
+    #GDかつ前日終値が移動平均より下ならフラグ点灯
+    elif((open_today < close_yesterday) and (close_yesterday < close_ave)):
+        flag = 1
+        
+    return flag
+
+def calc_x16(df, index, duration=25):
+
+    #戻り値(移動平均線乖離率のATR比)
+    rate_of_deviation = 0
+
+    close_yesterday = df.loc[index-1, "終値"]
+    close_ave = calc_close_avg(df, index, duration)
+    atr = calc_ATR(df, index, duration)
+
+    rate_of_deviation = (close_yesterday - close_ave)/atr
+
+    print("-----------")
+    print(df.loc[index,"日付"])
+    print("atr:{}".format(atr))
+    print("移動平均:{}".format(close_ave))
+
+    return rate_of_deviation
