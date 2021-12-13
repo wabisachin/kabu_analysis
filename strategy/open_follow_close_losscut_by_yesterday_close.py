@@ -159,7 +159,7 @@ pd.set_option("display.max_rows", None)
 def open_follow_close_losscut_by_yesterday_close(dataset, code, holding_days, α, params_x1=20, params_x2=20, params_x3=20, params_x4=60):#今回アルファは実際には不使用
 
     # 戻り値の変数定義
-    trades = pd.DataFrame(columns=["date", "code", "position", "pl_lc","pl_atr",  "x1", "x2", "x3", "x4", "x5", "x6", "x7", "x8", "x9", "x10", "x11", "x12", "x13", "x14", "x15", "x16"]) #各トレード結果のリストを格納。breakedは期間にブレイクされた日数,ratioはギャップ幅とATRとの比率
+    trades = pd.DataFrame(columns=["date", "code", "position", "pl_lc","pl_atr",  "x1", "x2", "x3", "x4", "x5", "x6", "x7", "x8", "x9", "x10", "x11", "x12", "x13", "x14", "x15", "x16", "x17", "x18", "x19", "x20"]) #各トレード結果のリストを格納。breakedは期間にブレイクされた日数,ratioはギャップ幅とATRとの比率
     params = [] #保有日数、LC乗数値α、各説明変数に用いたパラメータ値(X1, X2, X3, X4)を格納 ※リスト番号はdef定義時の引数の順番に対応（data_set,codeは除く)
 
     #tradesのデータ構造をキャスト
@@ -177,11 +177,15 @@ def open_follow_close_losscut_by_yesterday_close(dataset, code, holding_days, α
     trades["x9"] = trades["x9"].astype(float)
     trades["x10"] = trades["x10"].astype(float)
     trades["x11"] = trades["x11"].astype(float)
-    trades["x12"] = trades["x11"].astype(float)
-    trades["x13"] = trades["x11"].astype(float)
-    trades["x14"] = trades["x11"].astype(int)
+    trades["x12"] = trades["x12"].astype(float)
+    trades["x13"] = trades["x13"].astype(float)
+    trades["x14"] = trades["x14"].astype(int)
     trades["x15"] = trades["x15"].astype(int)
     trades["x16"] = trades["x16"].astype(float)
+    trades["x17"] = trades["x17"].astype(float)
+    trades["x18"] = trades["x18"].astype(float)
+    trades["x19"] = trades["x19"].astype(int)
+    trades["x20"] = trades["x20"].astype(float)
 
     #一時変数定義
     position = "" #トレードの売買種別（L ro S)を格納
@@ -202,7 +206,7 @@ def open_follow_close_losscut_by_yesterday_close(dataset, code, holding_days, α
     for index, data in dataset.iterrows():
 
         #トレード結果
-        trade = pd.Series(index=["date", "code", "position", "pl_lc", "pl_atr", "x1","x2", "x3", "x4", "x5", "x6", "x7", "x8", "x9", "x10", "x11", "x12", "x13", "x14", "x15", "x16"])
+        trade = pd.Series(index=["date", "code", "position", "pl_lc", "pl_atr", "x1","x2", "x3", "x4", "x5", "x6", "x7", "x8", "x9", "x10", "x11", "x12", "x13", "x14", "x15", "x16", "x17", "x18", "x19", "x20"])
 
         #検証前処理
         #データの先頭からX日間前のデータｈ参照できないのでスキップ（X:duration)
@@ -253,6 +257,10 @@ def open_follow_close_losscut_by_yesterday_close(dataset, code, holding_days, α
             trade["x14"] = mcv.calc_x14(dataset, index)
             trade["x15"] = mcv.calc_x15(dataset, index)
             trade["x16"] = mcv.calc_x16(dataset, index)
+            trade["x17"] = mcv.calc_x17(dataset, index)
+            trade["x18"] = mcv.calc_x18(dataset, index)
+            trade["x19"] = mcv.calc_x19(dataset, index)
+            trade["x20"] = mcv.calc_x20(dataset, index)
 
             trades = trades.append(trade,ignore_index=True)
 
@@ -310,4 +318,5 @@ if __name__ == "__main__":
     # print(result2.describe())
     # print("----------x2>2, x1>5の結果（保有日数3日)------------")
     # print(result2.loc[(result2["x2"]>2) & (result2["x1"] > 5)].describe())
-    print(result1[abs(result1["x16"])>4])
+    print(result1[(result1["x17"]<-0.1)&(result1["position"] == "l")])
+    print(result1[(result1["x17"]<-0.1)&(result1["position"] == "l")].describe())

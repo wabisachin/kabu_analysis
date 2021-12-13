@@ -22,7 +22,11 @@ X12: 前日のボラティリティ(直近20日間のATRに対する比率で計
 X13: 前日の値上がり率(直近20日間のATRに対する比率で計算)
 X14: ストップ高連続日数（寄らず）
 X15:前日終値が移動平均線より上（下）にあるか
-x16:前日終値の移動平均線乖離率のATR比（初期値25日）
+x16:前日終値の移動平均線乖離率のATR比（25日）
+x17:前日終値の移動平均乖離率(25日)
+x18:前日終値（価格修正済）
+x19:前日時点において短期移動平均線(20日）が長期移動平均線（60日）を上回っているか（下回っているか)どうか。上昇トレンド(下降トレンド)の判定フラグ。
+x20:前日時点における短期移動平均線(20日）と長期移動平均線（60日）の乖離率のATR比
 
 # X: 決算発表が前日にあったかどうか
 # X: 寄付の約定枚数(直近20日の出来高平均に対する比率)
@@ -52,6 +56,7 @@ def calc_volume_avg(df, index, duration=20):
 
     return volume_ave
 
+#単純移動平均線の算出関数
 def calc_close_avg(df, index, duration=20):
     temp_df = df.loc[index-duration:index-1]
     # print(temp_df.describe())
@@ -331,9 +336,77 @@ def calc_x16(df, index, duration=25):
 
     rate_of_deviation = (close_yesterday - close_ave)/atr
 
-    print("-----------")
-    print(df.loc[index,"日付"])
-    print("atr:{}".format(atr))
-    print("移動平均:{}".format(close_ave))
+    # print("-----------")
+    # print(df.loc[index,"日付"])
+    # print("atr:{}".format(atr))
+    # print("移動平均:{}".format(close_ave))
 
     return rate_of_deviation
+
+def calc_x17(df, index, duration=25):
+
+    #戻り値(移動平均線乖離率)
+    rate_of_deviation = 0
+
+    close_yesterday = df.loc[index-1, "終値"]
+    close_ave = calc_close_avg(df, index, duration)
+
+    rate_of_deviation = (close_yesterday - close_ave)/close_ave
+
+    # print("-----------")
+    # print(df.loc[index,"日付"])
+    # print("atr:{}".format(atr))
+    # print("移動平均:{}".format(close_ave))
+
+    return rate_of_deviation
+
+def calc_x18(df, index):
+
+    close_yesterday = df.loc[index-1, "終値"]
+    return close_yesterday
+
+def calc_x19(df, index, duration1=20, duration2=60):
+
+    #戻り値(上昇トレンド、下降トレンドの順張りflag)
+    flag = 0
+
+    open_today = df.loc[index, "始値"]
+    close_yesterday = df.loc[index-1, "終値"]
+
+    #短期移動平均線
+    moving_ave1 = calc_close_avg(df, index, duration1)
+    #長期移動平均線
+    moving_ave2 = calc_close_avg(df, index, duration2)
+
+
+    #GUかつ短期移動平均線>長期位平均線なら上昇トレンド→順張りフラグ点灯
+    if((open_today > close_yesterday) and (moving_ave1 > moving_ave2)):
+        flag = 1
+
+    #GDかつ短期移動平均線<長期位平均線なら下降トレンド→順張りフラグ点灯
+    elif((open_today < close_yesterday) and (moving_ave1 < moving_ave2)):
+        flag = 1
+        
+    return flag
+
+def calc_x20(df, index, duration1=20, duration2=60):
+
+    #戻り値(短期移動平均線と長期移動平均線のATR比乖離率のflag)
+    rate_of_deviation = 0
+
+
+    atr = calc_ATR(df, index, duration1)
+    #短期移動平均線
+    moving_ave1 = calc_close_avg(df, index, duration1)
+    #長期移動平均線
+    moving_ave2 = calc_close_avg(df, index, duration2)
+
+    rate_of_deviation = (moving_ave1 - moving_ave2)/atr
+
+    # print("-----------")
+    # print(df.loc[index,"日付"])
+    # print("atr:{}".format(atr))
+    # print("移動平均:{}".format(close_ave))
+
+    return rate_of_deviation
+
