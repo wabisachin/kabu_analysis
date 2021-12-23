@@ -392,7 +392,7 @@ def plot_scatter(df, x_label, y_label, x_min=None, x_max=None, y_min=None, y_max
     # plt.clf()
     # plt.close()
     plt.title("散布図(x軸:{}, y軸:{})".format(x_label,y_label))
-    plt.scatter(df[x_label], df[y_label], s=10)
+    plt.scatter(df[x_label], df[y_label], s=5)
     plt.xlabel(x_label)
     plt.ylabel(y_label)
     if(x_min!=None or x_max!=None or y_min!=None or y_max!=None):
